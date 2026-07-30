@@ -45,7 +45,7 @@
         }
 
         .liquid-sidebar {
-            background: rgba(11, 17, 32, 0.75);
+            background: rgba(11, 17, 32, 0.85);
             backdrop-filter: blur(30px);
             -webkit-backdrop-filter: blur(30px);
             border-right: 1px solid var(--glass-border);
@@ -146,9 +146,57 @@
         </div>
     </div>
 
+    <!-- MENÚ MÓVIL DESPLEGABLE (DRAWER) -->
+    <div id="mobile-drawer" class="fixed inset-0 z-40 bg-black/70 backdrop-blur-md hidden transition-opacity opacity-0 md:hidden">
+        <div class="absolute left-0 top-0 bottom-0 w-72 liquid-sidebar p-6 flex flex-col justify-between shadow-2xl transform -translate-x-full transition-transform duration-300" id="drawer-content">
+            <div>
+                <div class="flex items-center justify-between pb-6 border-b border-white/10">
+                    <div class="flex items-center space-x-3">
+                        <div class="p-2 bg-indigo-500/20 border border-indigo-500/30 rounded-xl text-indigo-400">
+                            <i data-lucide="users" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-white font-bold text-base tracking-wide">TalentoHumano</h1>
+                            <p class="text-[10px] text-slate-400 tracking-wider uppercase font-semibold">Menú de Navegación</p>
+                        </div>
+                    </div>
+                    <button onclick="toggleMobileMenu()" class="text-slate-400 hover:text-white p-2">
+                        <i data-lucide="x" class="w-6 h-6"></i>
+                    </button>
+                </div>
+                <nav class="py-4 space-y-1.5">
+                    <a href="#dashboard" onclick="cambiarSeccionMovil('dashboard', this)" class="nav-link-m flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-medium text-slate-300 hover:bg-white/5 transition">
+                        <i data-lucide="layout-dashboard" class="w-5 h-5 text-indigo-400"></i><span>Dashboard</span>
+                    </a>
+                    <a href="#empleados" onclick="cambiarSeccionMovil('empleados', this)" class="nav-link-m flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-medium text-slate-300 hover:bg-white/5 transition">
+                        <i data-lucide="user-check" class="w-5 h-5 text-blue-400"></i><span>Directorio Empleados</span>
+                    </a>
+                    <a href="#grupos" onclick="cambiarSeccionMovil('grupos', this)" class="nav-link-m flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-medium text-slate-300 hover:bg-white/5 transition">
+                        <i data-lucide="layers" class="w-5 h-5 text-purple-400"></i><span>Grupos de Trabajo</span>
+                    </a>
+                    <a href="#asistencias" onclick="cambiarSeccionMovil('asistencias', this)" class="nav-link-m flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-medium bg-indigo-600/80 text-white shadow-lg shadow-indigo-500/20 border border-indigo-400/30 transition">
+                        <i data-lucide="clock" class="w-5 h-5"></i><span>Control Asistencias</span>
+                    </a>
+                    <a href="#reposos" onclick="cambiarSeccionMovil('reposos', this)" class="nav-link-m flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-medium text-slate-300 hover:bg-white/5 transition">
+                        <i data-lucide="file-heart" class="w-5 h-5 text-rose-400"></i><span>Registro Reposos</span>
+                    </a>
+                    <a href="#guardias" onclick="cambiarSeccionMovil('guardias', this)" class="nav-link-m flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-medium text-slate-300 hover:bg-white/5 transition">
+                        <i data-lucide="shield-check" class="w-5 h-5 text-emerald-400"></i><span>Guardias Terminal</span>
+                    </a>
+                    <a href="#retardados" onclick="cambiarSeccionMovil('retardados', this)" class="nav-link-m flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-medium text-slate-300 hover:bg-white/5 transition">
+                        <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-400"></i><span>Apartado Incidencias</span>
+                    </a>
+                </nav>
+            </div>
+            <div class="p-4 border-t border-white/10 text-[11px] text-slate-500 text-center">
+                Liquid Glass v4.3 &bull; 2026
+            </div>
+        </div>
+    </div>
+
     <div class="flex h-screen overflow-hidden">
-        <!-- BARRA LATERAL -->
-        <aside class="w-64 liquid-sidebar flex flex-col justify-between hidden md:flex no-print z-20">
+        <!-- BARRA LATERAL (PC) -->
+        <aside class="w-64 liquid-sidebar flex-col justify-between hidden md:flex no-print z-20">
             <div>
                 <div class="p-6 flex items-center space-x-3 border-b border-white/10">
                     <div class="p-2 bg-indigo-500/20 border border-indigo-500/30 rounded-xl text-indigo-400">
@@ -160,25 +208,25 @@
                     </div>
                 </div>
                 <nav class="p-4 space-y-1.5">
-                    <a href="#dashboard" onclick="cambiarSeccion('dashboard')" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-medium text-slate-300 hover:bg-white/5 transition">
+                    <a href="#dashboard" onclick="cambiarSeccion('dashboard', this)" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-medium text-slate-300 hover:bg-white/5 transition">
                         <i data-lucide="layout-dashboard" class="w-5 h-5 text-indigo-400"></i><span>Dashboard</span>
                     </a>
-                    <a href="#empleados" onclick="cambiarSeccion('empleados')" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-medium text-slate-300 hover:bg-white/5 transition">
+                    <a href="#empleados" onclick="cambiarSeccion('empleados', this)" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-medium text-slate-300 hover:bg-white/5 transition">
                         <i data-lucide="user-check" class="w-5 h-5 text-blue-400"></i><span>Directorio Empleados</span>
                     </a>
-                    <a href="#grupos" onclick="cambiarSeccion('grupos')" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-medium text-slate-300 hover:bg-white/5 transition">
+                    <a href="#grupos" onclick="cambiarSeccion('grupos', this)" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-medium text-slate-300 hover:bg-white/5 transition">
                         <i data-lucide="layers" class="w-5 h-5 text-purple-400"></i><span>Grupos de Trabajo</span>
                     </a>
-                    <a href="#asistencias" onclick="cambiarSeccion('asistencias')" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-medium bg-indigo-600/80 text-white shadow-lg shadow-indigo-500/20 border border-indigo-400/30 transition">
+                    <a href="#asistencias" onclick="cambiarSeccion('asistencias', this)" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-medium bg-indigo-600/80 text-white shadow-lg shadow-indigo-500/20 border border-indigo-400/30 transition">
                         <i data-lucide="clock" class="w-5 h-5"></i><span>Control Asistencias</span>
                     </a>
-                    <a href="#reposos" onclick="cambiarSeccion('reposos')" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-medium text-slate-300 hover:bg-white/5 transition">
+                    <a href="#reposos" onclick="cambiarSeccion('reposos', this)" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-medium text-slate-300 hover:bg-white/5 transition">
                         <i data-lucide="file-heart" class="w-5 h-5 text-rose-400"></i><span>Registro Reposos</span>
                     </a>
-                    <a href="#guardias" onclick="cambiarSeccion('guardias')" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-medium text-slate-300 hover:bg-white/5 transition">
+                    <a href="#guardias" onclick="cambiarSeccion('guardias', this)" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-medium text-slate-300 hover:bg-white/5 transition">
                         <i data-lucide="shield-check" class="w-5 h-5 text-emerald-400"></i><span>Guardias Terminal</span>
                     </a>
-                    <a href="#retardados" onclick="cambiarSeccion('retardados')" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-medium text-slate-300 hover:bg-white/5 transition">
+                    <a href="#retardados" onclick="cambiarSeccion('retardados', this)" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-medium text-slate-300 hover:bg-white/5 transition">
                         <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-400"></i><span>Apartado Incidencias</span>
                     </a>
                 </nav>
@@ -190,17 +238,23 @@
 
         <!-- CONTENIDO PRINCIPAL -->
         <main class="flex-1 flex flex-col h-full overflow-y-auto relative">
-            <header class="liquid-header px-8 py-4 flex justify-between items-center no-print z-10 sticky top-0">
-                <span id="titulo-seccion" class="text-lg font-bold text-white tracking-wide">Control de Asistencias y Jornada</span>
+            <header class="liquid-header px-6 py-4 flex justify-between items-center no-print z-10 sticky top-0">
                 <div class="flex items-center space-x-3">
-                    <span class="text-xs font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-3 py-1 rounded-full backdrop-blur-md flex items-center space-x-1.5">
+                    <!-- BOTÓN MENÚ HAMBURGUESA PARA MÓVIL -->
+                    <button onclick="toggleMobileMenu()" class="md:hidden p-2 rounded-xl bg-white/10 text-white hover:bg-white/20 transition">
+                        <i data-lucide="menu" class="w-5 h-5"></i>
+                    </button>
+                    <span id="titulo-seccion" class="text-sm md:text-lg font-bold text-white tracking-wide">Control de Asistencias y Jornada</span>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <span class="text-[10px] md:text-xs font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-3 py-1 rounded-full backdrop-blur-md flex items-center space-x-1.5">
                         <i data-lucide="shield" class="w-3.5 h-3.5"></i>
-                        <span>Admin: Dorila Labbarca</span>
+                        <span class="truncate max-w-[120px] md:max-w-none">Dorila Labbarca</span>
                     </span>
                 </div>
             </header>
 
-            <div class="p-8 max-w-7xl mx-auto w-full space-y-6 no-print">
+            <div class="p-4 md:p-8 max-w-7xl mx-auto w-full space-y-6 no-print">
 
                 <!-- 1. DASHBOARD -->
                 <section id="seccion-dashboard" class="seccion-app hidden space-y-6">
@@ -346,9 +400,9 @@
                             </div>
                         </form>
 
-                        <div class="flex justify-between items-center pt-2">
+                        <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center pt-2 gap-2">
                             <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Historial de Asistencias</h3>
-                            <input type="text" id="filtro-asist" onkeyup="filtrarAsistencias()" placeholder="🔍 Buscar trabajador o grupo..." class="liquid-input rounded-xl px-3 py-1.5 text-xs w-60">
+                            <input type="text" id="filtro-asist" onkeyup="filtrarAsistencias()" placeholder="🔍 Buscar trabajador..." class="liquid-input rounded-xl px-3 py-1.5 text-xs w-full sm:w-60">
                         </div>
 
                         <div class="overflow-x-auto">
@@ -650,12 +704,10 @@
 
             document.getElementById('guardia-fecha').valueAsDate = new Date();
             
-            // Verificar expiración de reposos al cargar el sistema
             verificarRepososExpirados();
             actualizarTodo();
         });
 
-        // FUNCIÓN AUTOMÁTICA DE EXPIRACIÓN DE REPOSOS Y NOTIFICACIÓN
         function verificarRepososExpirados() {
             const hoyStr = new Date().toISOString().split('T')[0];
             const hoyDate = new Date(hoyStr + 'T00:00:00');
@@ -666,7 +718,6 @@
             reposos.forEach(r => {
                 const finDate = new Date(r.fecFin + 'T00:00:00');
                 if (hoyDate > finDate) {
-                    // El reposo ya expiró: Se remueve del arreglo de reposos y se genera notificación
                     cambios = true;
                     notificacionesSistema.unshift({
                         id: Date.now() + Math.random(),
@@ -687,7 +738,6 @@
 
         function renderizarNotificacionesFlotantes() {
             const contenedor = document.getElementById('contenedor-notificaciones');
-            // Tomar las últimas 3 notificaciones no leídas o recientes
             const activas = notificacionesSistema.slice(0, 3);
             
             contenedor.innerHTML = activas.map(n => `
@@ -727,16 +777,45 @@
             if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
-        function cambiarSeccion(seccionId) {
+        // CONTROL DEL MENÚ MÓVIL
+        function toggleMobileMenu() {
+            const drawer = document.getElementById('mobile-drawer');
+            const content = document.getElementById('drawer-content');
+            if (drawer.classList.contains('hidden')) {
+                drawer.classList.remove('hidden');
+                setTimeout(() => {
+                    drawer.classList.remove('opacity-0');
+                    content.classList.remove('-translate-x-full');
+                }, 10);
+            } else {
+                drawer.classList.add('opacity-0');
+                content.classList.add('-translate-x-full');
+                setTimeout(() => {
+                    drawer.classList.add('hidden');
+                }, 300);
+            }
+        }
+
+        function cambiarSeccionMovil(seccionId, elemento) {
+            cambiarSeccion(seccionId, elemento);
+            toggleMobileMenu();
+        }
+
+        function cambiarSeccion(seccionId, elemento) {
             document.querySelectorAll('.seccion-app').forEach(el => el.classList.add('hidden'));
             document.getElementById(`seccion-${seccionId}`).classList.remove('hidden');
             
-            document.querySelectorAll('.nav-link').forEach(el => {
+            // Actualizar clases de navegación en PC y Móvil
+            document.querySelectorAll('.nav-link, .nav-link-m').forEach(el => {
                 el.classList.remove('bg-indigo-600/80', 'text-white', 'shadow-lg', 'shadow-indigo-500/20', 'border', 'border-indigo-400/30');
                 el.classList.add('text-slate-300', 'hover:bg-white/5');
             });
-            event.currentTarget.classList.add('bg-indigo-600/80', 'text-white', 'shadow-lg', 'shadow-indigo-500/20', 'border', 'border-indigo-400/30');
-            event.currentTarget.classList.remove('text-slate-300', 'hover:bg-white/5');
+            
+            // Si pasaron el elemento por parámetro, lo iluminamos
+            if (elemento) {
+                elemento.classList.add('bg-indigo-600/80', 'text-white', 'shadow-lg', 'shadow-indigo-500/20', 'border', 'border-indigo-400/30');
+                elemento.classList.remove('text-slate-300', 'hover:bg-white/5');
+            }
             
             const titulos = {
                 dashboard: 'Panel de Control General',
@@ -991,13 +1070,8 @@
                 const deptoLower = e.depto.toLowerCase();
                 const grupoLower = e.grupo.toLowerCase();
 
-                // Excluir chóferes / conductores
                 const esChofer = cargoLower.includes('chofer') || cargoLower.includes('conductor') || grupoLower.includes('choferes');
-                
-                // Excluir personal médico / atención médica
                 const esMedico = cargoLower.includes('médico') || cargoLower.includes('medico') || cargoLower.includes('enfermer') || deptoLower.includes('salud') || cargoLower.includes('atención médica');
-
-                // Excluir personal con reposo temporal activo en esa fecha
                 const enReposo = empleadoEnReposo(e.cedula, fechaVal);
 
                 return !esChofer && !esMedico && !enReposo;
