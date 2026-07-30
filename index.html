@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema Integral de Gestión Humana (RRHH) - iOS Liquid Glass</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --glass-bg: rgba(15, 23, 42, 0.65);
+            --glass-card: rgba(30, 41, 59, 0.45);
+            --glass-border: rgba(255, 255, 255, 0.12);
+            --glass-border-hover: rgba(255, 255, 255, 0.28);
+            --glass-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        body {
+            background: linear-gradient(135deg, #090d16 0%, #151c2f 40%, #1e113a 100%);
+            background-size: 300% 300%;
+            animation: gradientBG 20s ease infinite;
+            color: #f1f5f9;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .liquid-glass {
+            background: var(--glass-card);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .liquid-glass:hover {
+            border-color: var(--glass-border-hover);
+        }
+
+        .liquid-sidebar {
+            background: rgba(11, 17, 32, 0.75);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border-right: 1px solid var(--glass-border);
+        }
+
+        .liquid-header {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .liquid-input {
+            background: rgba(15, 23, 42, 0.4) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            color: #fff !important;
+            backdrop-filter: blur(10px);
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .liquid-input:focus {
+            border-color: rgba(99, 102, 241, 0.6) !important;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3), 0 0 15px rgba(99, 102, 241, 0.2) !important;
+        }
+
+        .liquid-input option {
+            background: #0f172a;
+            color: #fff;
+        }
+
+        table tr {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            transition: background 0.2s;
+        }
+        table tr:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        #ios-lock-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 99999;
+            background: rgba(9, 13, 22, 0.85);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        #ios-lock-screen.fade-out {
+            opacity: 0;
+            transform: scale(1.05);
+            pointer-events: none;
+        }
+
+        @media print {
+            body * { visibility: hidden; }
+            #printable-report, #printable-report * { visibility: visible; }
+            #printable-report {
+                display: block !important;
+                position: absolute; left: 0; top: 0; width: 100%;
+                background: white !important; color: black !important; padding: 15px; z-index: 99999;
+            }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body class="font-sans antialiased h-screen overflow-hidden">
+
+    <!-- NOTIFICACIÓN FLOTANTE (ESQUINITA SUPERIOR DERECHA) -->
+    <div id="contenedor-notificaciones" class="fixed top-4 right-4 z-50 flex flex-col space-y-2 max-w-sm pointer-events-none no-print"></div>
+
+    <!-- PANTALLA DE ENTRADA iOS -->
+    <div id="ios-lock-screen">
+        <div class="liquid-glass p-8 rounded-[40px] max-w-md w-full mx-4 text-center space-y-6 border border-white/20 shadow-2xl relative overflow-hidden">
+            <div class="absolute -top-24 -right-24 w-48 h-48 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute -bottom-24 -left-24 w-48 h-48 bg-purple-500/20 rounded-full blur-3xl pointer-events-none"></div>
+            
+            <div class="w-16 h-16 mx-auto bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/30 text-white">
+                <i data-lucide="sparkles" class="w-8 h-8"></i>
+            </div>
+
+            <div class="space-y-2">
+                <p id="ios-saludo" class="text-indigo-300 font-medium text-sm tracking-widest uppercase">Buen día</p>
+                <h1 class="text-2xl md:text-3xl font-bold text-white tracking-tight">Bienvenida, Dorila Labbarca</h1>
+                <p class="text-xs text-slate-400">Sistema Integral de Gestión Humana (RRHH)</p>
+            </div>
+
+            <button onclick="entrarAlSistema()" class="w-full py-4 px-6 bg-white/10 hover:bg-white/20 border border-white/20 rounded-2xl text-white font-semibold text-sm transition duration-300 flex items-center justify-center space-x-2 group shadow-lg backdrop-blur-md">
+                <span>Ingresar al Sistema</span>
+                <i data-lucide="arrow-right" class="w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
+            </button>
+            
+            <p class="text-[10px] text-slate-500">iOS Liquid Glass Security • Acceso Autorizado</p>
+        </div>
+    </div>
+
+    <div class="flex h-screen overflow-hidden">
+        <!-- BARRA LATERAL -->
+        <aside class="w-64 liquid-sidebar flex flex-col justify-between hidden md:flex no-print z-20">
+            <div>
+                <div class="p-6 flex items-center space-x-3 border-b border-white/10">
+                    <div class="p-2 bg-indigo-500/20 border border-indigo-500/30 rounded-xl text-indigo-400">
+                        <i data-lucide="users" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-white font-bold text-base tracking-wide">TalentoHumano</h1>
+                        <p class="text-[10px] text-slate-400 tracking-wider uppercase font-semibold">iOS Liquid Glass</p>
+                    </div>
+                </div>
+                <nav class="p-4 space-y-1.5">
+                    <a href="#dashboard" onclick="cambiarSeccion('dashboard')" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-medium text-slate-300 hover:bg-white/5 transition">
+                        <i data-lucide="layout-dashboard" class="w-5 h-5 text-indigo-400"></i><span>Dashboard</span>
+                    </a>
+                    <a href="#empleados" onclick="cambiarSeccion('empleados')" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-medium text-slate-300 hover:bg-white/5 transition">
+                        <i data-lucide="user-check" class="w-5 h-5 text-blue-400"></i><span>Directorio Empleados</span>
+                    </a>
+                    <a href="#grupos" onclick="cambiarSeccion('grupos')" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-medium text-slate-300 hover:bg-white/5 transition">
+                        <i data-lucide="layers" class="w-5 h-5 text-purple-400"></i><span>Grupos de Trabajo</span>
+                    </a>
+                    <a href="#asistencias" onclick="cambiarSeccion('asistencias')" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-medium bg-indigo-600/80 text-white shadow-lg shadow-indigo-500/20 border border-indigo-400/30 transition">
+                        <i data-lucide="clock" class="w-5 h-5"></i><span>Control Asistencias</span>
+                    </a>
+                    <a href="#reposos" onclick="cambiarSeccion('reposos')" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-medium text-slate-300 hover:bg-white/5 transition">
+                        <i data-lucide="file-heart" class="w-5 h-5 text-rose-400"></i><span>Registro Reposos</span>
+                    </a>
+                    <a href="#guardias" onclick="cambiarSeccion('guardias')" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-medium text-slate-300 hover:bg-white/5 transition">
+                        <i data-lucide="shield-check" class="w-5 h-5 text-emerald-400"></i><span>Guardias Terminal</span>
+                    </a>
+                    <a href="#retardados" onclick="cambiarSeccion('retardados')" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-medium text-slate-300 hover:bg-white/5 transition">
+                        <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-400"></i><span>Apartado Incidencias</span>
+                    </a>
+                </nav>
+            </div>
+            <div class="p-4 border-t border-white/10 text-[11px] text-slate-500 text-center">
+                Liquid Glass v4.3 &bull; 2026
+            </div>
+        </aside>
+
+        <!-- CONTENIDO PRINCIPAL -->
+        <main class="flex-1 flex flex-col h-full overflow-y-auto relative">
+            <header class="liquid-header px-8 py-4 flex justify-between items-center no-print z-10 sticky top-0">
+                <span id="titulo-seccion" class="text-lg font-bold text-white tracking-wide">Control de Asistencias y Jornada</span>
+                <div class="flex items-center space-x-3">
+                    <span class="text-xs font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-3 py-1 rounded-full backdrop-blur-md flex items-center space-x-1.5">
+                        <i data-lucide="shield" class="w-3.5 h-3.5"></i>
+                        <span>Admin: Dorila Labbarca</span>
+                    </span>
+                </div>
+            </header>
+
+            <div class="p-8 max-w-7xl mx-auto w-full space-y-6 no-print">
+
+                <!-- 1. DASHBOARD -->
+                <section id="seccion-dashboard" class="seccion-app hidden space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="liquid-glass p-6 rounded-3xl flex items-center space-x-4">
+                            <div class="p-3 bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 rounded-2xl"><i data-lucide="users" class="w-6 h-6"></i></div>
+                            <div>
+                                <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Total Empleados</p>
+                                <h3 id="stat-total" class="text-2xl font-bold text-white">0</h3>
+                            </div>
+                        </div>
+                        <div class="liquid-glass p-6 rounded-3xl flex items-center space-x-4">
+                            <div class="p-3 bg-purple-500/20 border border-purple-500/30 text-purple-400 rounded-2xl"><i data-lucide="layers" class="w-6 h-6"></i></div>
+                            <div>
+                                <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Grupos de Trabajo</p>
+                                <h3 id="stat-grupos" class="text-2xl font-bold text-white">0</h3>
+                            </div>
+                        </div>
+                        <div class="liquid-glass p-6 rounded-3xl flex items-center space-x-4">
+                            <div class="p-3 bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 rounded-2xl"><i data-lucide="user-check" class="w-6 h-6"></i></div>
+                            <div>
+                                <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Asistencias Hoy</p>
+                                <h3 id="stat-asistencias" class="text-2xl font-bold text-white">0</h3>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. EMPLEADOS -->
+                <section id="seccion-empleados" class="seccion-app hidden space-y-6">
+                    <div class="liquid-glass p-6 rounded-3xl space-y-6">
+                        <div class="flex justify-between items-center">
+                            <h2 class="text-base font-bold text-white flex items-center space-x-2">
+                                <i data-lucide="user-check" class="w-5 h-5 text-blue-400"></i>
+                                <span>Directorio General de Empleados</span>
+                            </h2>
+                            <button onclick="abrirModalEmpleado()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 rounded-2xl text-xs font-semibold flex items-center space-x-2 shadow-lg shadow-indigo-500/20 transition">
+                                <i data-lucide="user-plus" class="w-4 h-4"></i><span>Nuevo Empleado</span>
+                            </button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="border-b border-white/10 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                                        <th class="py-3 px-4">Cédula</th>
+                                        <th class="py-3 px-4">Nombre Completo</th>
+                                        <th class="py-3 px-4">Grupo de Trabajo</th>
+                                        <th class="py-3 px-4">Cargo</th>
+                                        <th class="py-3 px-4">Departamento</th>
+                                        <th class="py-3 px-4 text-right">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabla-empleados" class="divide-y divide-white/5 text-sm text-slate-300"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 3. GRUPOS DE TRABAJO -->
+                <section id="seccion-grupos" class="seccion-app hidden space-y-6">
+                    <div class="liquid-glass p-6 rounded-3xl space-y-6 border-purple-500/20">
+                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-white/10 pb-4">
+                            <div>
+                                <h2 class="text-base font-bold text-white flex items-center space-x-2">
+                                    <i data-lucide="layers" class="w-5 h-5 text-purple-400"></i>
+                                    <span>Gestión de Grupos de Trabajo y Áreas</span>
+                                </h2>
+                                <p class="text-xs text-slate-400">Organiza al personal en equipos operativos, taquillas o turnos.</p>
+                            </div>
+                            <button onclick="abrirModalGrupo()" class="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2.5 rounded-2xl text-xs font-semibold flex items-center space-x-2 shadow-lg shadow-purple-500/20 transition">
+                                <i data-lucide="folder-plus" class="w-4 h-4"></i><span>Nuevo Grupo</span>
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="grid-grupos"></div>
+                    </div>
+                </section>
+
+                <!-- 4. CONTROL DE ASISTENCIAS -->
+                <section id="seccion-asistencias" class="seccion-app space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="liquid-glass p-4 rounded-2xl flex items-center justify-between">
+                            <div>
+                                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">A tiempo hoy</p>
+                                <h4 id="count-presente" class="text-xl font-bold text-emerald-400">0</h4>
+                            </div>
+                            <div class="p-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl"><i data-lucide="check" class="w-5 h-5"></i></div>
+                        </div>
+                        <div class="liquid-glass p-4 rounded-2xl flex items-center justify-between cursor-pointer hover:border-amber-400/50 transition" onclick="cambiarSeccionPorClick('retardados')">
+                            <div>
+                                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Con Incidencias</p>
+                                <h4 id="count-retardo" class="text-xl font-bold text-amber-400">0</h4>
+                            </div>
+                            <div class="p-2 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl"><i data-lucide="alert-circle" class="w-5 h-5"></i></div>
+                        </div>
+                        <div class="liquid-glass p-4 rounded-2xl flex items-center justify-between">
+                            <div>
+                                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Ausencias Hoy</p>
+                                <h4 id="count-ausente" class="text-xl font-bold text-rose-400">0</h4>
+                            </div>
+                            <div class="p-2 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-xl"><i data-lucide="x-circle" class="w-5 h-5"></i></div>
+                        </div>
+                    </div>
+
+                    <div class="liquid-glass p-6 rounded-3xl space-y-6">
+                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-white/10 pb-4">
+                            <div>
+                                <h2 class="text-base font-bold text-white flex items-center space-x-2">
+                                    <i data-lucide="clock" class="w-5 h-5 text-indigo-400"></i>
+                                    <span>Registro Diario por Trabajador y Grupo</span>
+                                </h2>
+                                <p class="text-xs text-slate-400">Retardos acumulan 8h de deuda | Ausencias acumulan 24h de deuda.</p>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <button onclick="imprimirCierreConFirmas()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2.5 rounded-2xl text-xs font-semibold flex items-center space-x-2 shadow-lg shadow-emerald-500/20 transition">
+                                    <i data-lucide="printer" class="w-4 h-4"></i><span>Imprimir Cierre con Firmas</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <form id="form-asistencia" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end bg-white/5 p-4 rounded-2xl border border-white/10">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-300 mb-1">Trabajador</label>
+                                <select id="asist-empleado" class="w-full liquid-input rounded-xl p-2.5 text-xs" required></select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-300 mb-1">Estado</label>
+                                <select id="asist-estado" class="w-full liquid-input rounded-xl p-2.5 text-xs" required>
+                                    <option value="Presente">Presente (A tiempo)</option>
+                                    <option value="Retardo">Retardo (Acumula 8h)</option>
+                                    <option value="Ausente">Ausente / Falta (Acumula 24h)</option>
+                                    <option value="Permiso Medico">Permiso Médico / Justificado</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-300 mb-1">Hora</label>
+                                <input type="time" id="asist-hora" class="w-full liquid-input rounded-xl p-2.5 text-xs" required>
+                            </div>
+                            <div>
+                                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 rounded-xl text-xs transition flex items-center justify-center space-x-2 shadow-md">
+                                    <i data-lucide="plus-circle" class="w-4 h-4"></i><span>Fichar Asistencia</span>
+                                </button>
+                            </div>
+                        </form>
+
+                        <div class="flex justify-between items-center pt-2">
+                            <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Historial de Asistencias</h3>
+                            <input type="text" id="filtro-asist" onkeyup="filtrarAsistencias()" placeholder="🔍 Buscar trabajador o grupo..." class="liquid-input rounded-xl px-3 py-1.5 text-xs w-60">
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="border-b border-white/10 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                                        <th class="py-3 px-4">Fecha / Hora</th>
+                                        <th class="py-3 px-4">Cédula</th>
+                                        <th class="py-3 px-4">Trabajador</th>
+                                        <th class="py-3 px-4">Grupo / Área</th>
+                                        <th class="py-3 px-4">Estado</th>
+                                        <th class="py-3 px-4 text-right">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabla-asistencias" class="divide-y divide-white/5 text-sm text-slate-300"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 5. REPOSOS MÉDICOS -->
+                <section id="seccion-reposos" class="seccion-app hidden space-y-6">
+                    <div class="liquid-glass p-6 rounded-3xl space-y-6 border-rose-500/20">
+                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-white/10 pb-4">
+                            <div>
+                                <h2 class="text-base font-bold text-white flex items-center space-x-2">
+                                    <i data-lucide="file-heart" class="w-5 h-5 text-rose-400"></i>
+                                    <span>Control y Registro de Reposos Médicos</span>
+                                </h2>
+                                <p class="text-xs text-slate-400">Un trabajador con reposo activo <span class="text-rose-400 font-bold">no puede ir al terminal</span>. Al vencerse, el sistema lo quita solo y notifica.</p>
+                            </div>
+                            <span id="badge-total-reposos" class="bg-rose-500/20 text-rose-300 border border-rose-500/30 font-bold text-xs px-3 py-1.5 rounded-full">0 Reposos Registrados</span>
+                        </div>
+
+                        <form id="form-reposo" class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end bg-rose-500/5 p-4 rounded-2xl border border-rose-500/20">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-300 mb-1">Trabajador</label>
+                                <select id="reposo-empleado" class="w-full liquid-input rounded-xl p-2.5 text-xs" required></select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-300 mb-1">Fecha de Inicio</label>
+                                <input type="date" id="reposo-fec-inicio" class="w-full liquid-input rounded-xl p-2.5 text-xs" required>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-300 mb-1">Días de Reposo</label>
+                                <input type="number" id="reposo-dias" min="1" value="3" class="w-full liquid-input rounded-xl p-2.5 text-xs" required>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-300 mb-1">Motivo / Diagnóstico</label>
+                                <input type="text" id="reposo-motivo" placeholder="Ej: Reposo IVSS / Virosis" class="w-full liquid-input rounded-xl p-2.5 text-xs" required>
+                            </div>
+                            <div>
+                                <button type="submit" class="w-full bg-rose-600 hover:bg-rose-500 text-white font-semibold py-2.5 rounded-xl text-xs transition flex items-center justify-center space-x-2 shadow-lg shadow-rose-600/20">
+                                    <i data-lucide="plus-circle" class="w-4 h-4"></i><span>Guardar Reposo</span>
+                                </button>
+                            </div>
+                        </form>
+
+                        <div class="space-y-3">
+                            <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Historial de Reposos</h3>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr class="border-b border-white/10 text-xs font-bold text-slate-400 uppercase tracking-wider bg-white/5">
+                                            <th class="py-3 px-4">Cédula</th>
+                                            <th class="py-3 px-4">Trabajador</th>
+                                            <th class="py-3 px-4">Grupo / Área</th>
+                                            <th class="py-3 px-4">Fec. Inicio / Fin</th>
+                                            <th class="py-3 px-4 text-center">Días</th>
+                                            <th class="py-3 px-4">Motivo / Diagnóstico</th>
+                                            <th class="py-3 px-4 text-right">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tabla-reposos" class="divide-y divide-white/5 text-sm text-slate-300"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 6. GUARDIAS EN TERMINAL -->
+                <section id="seccion-guardias" class="seccion-app hidden space-y-6">
+                    <div class="liquid-glass p-6 rounded-3xl space-y-6 border-emerald-500/20">
+                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-white/10 pb-4">
+                            <div>
+                                <h2 class="text-base font-bold text-white flex items-center space-x-2">
+                                    <i data-lucide="shield-check" class="w-5 h-5 text-emerald-400"></i>
+                                    <span>Programación de Guardias Rotativas (Terminal)</span>
+                                </h2>
+                                <p class="text-xs text-slate-400">Excluye automáticamente choferes, personal médico y colaboradores en reposo.</p>
+                            </div>
+                            <button type="button" onclick="aplicarSugerenciaGuardia()" class="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-4 py-2 rounded-2xl text-xs font-bold flex items-center space-x-2 transition">
+                                <i data-lucide="sparkles" class="w-4 h-4 text-emerald-400"></i><span>🔄 Rellenar con Sugerencia</span>
+                            </button>
+                        </div>
+
+                        <form id="form-guardia" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end bg-emerald-500/5 p-4 rounded-2xl border border-emerald-500/20">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-300 mb-1">Fecha de Guardia</label>
+                                <input type="date" id="guardia-fecha" onchange="renderizarCheckboxOficiales()" class="w-full liquid-input rounded-xl p-2.5 text-xs font-bold text-emerald-300" required>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-300 mb-1">Taquilla</label>
+                                <select id="guardia-taquilla" class="w-full liquid-input rounded-xl p-2.5 text-xs font-medium" required></select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-300 mb-1">Andén</label>
+                                <select id="guardia-anden" class="w-full liquid-input rounded-xl p-2.5 text-xs font-medium" required></select>
+                            </div>
+                            <div>
+                                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-xl text-xs transition flex items-center justify-center space-x-2 shadow-lg shadow-emerald-600/20">
+                                    <i data-lucide="calendar-plus" class="w-4 h-4"></i><span>Asignar Guardia</span>
+                                </button>
+                            </div>
+                        </form>
+
+                        <details class="bg-white/5 rounded-2xl border border-white/10 group overflow-hidden" open>
+                            <summary class="p-4 cursor-pointer select-none flex justify-between items-center font-bold text-slate-300 hover:bg-white/5 transition text-xs uppercase tracking-wider">
+                                <div class="flex items-center space-x-2">
+                                    <i data-lucide="users" class="w-4 h-4 text-indigo-400"></i>
+                                    <span>Personal Autorizado Disponible para Terminal</span>
+                                </div>
+                                <div class="flex items-center space-x-3">
+                                    <span id="contador-oficiales-autorizados" class="text-xs font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2.5 py-1 rounded-full">0 disponibles</span>
+                                    <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 group-open:rotate-180 transition-transform"></i>
+                                </div>
+                            </summary>
+                            <div class="p-4 border-t border-white/10 bg-black/20 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3" id="lista-checkbox-oficiales"></div>
+                        </details>
+
+                        <div class="space-y-3">
+                            <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Cronograma de Guardias</h3>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr class="border-b border-white/10 text-xs font-bold text-slate-400 uppercase tracking-wider bg-white/5">
+                                            <th class="py-3 px-4">Fecha</th>
+                                            <th class="py-3 px-4">🎟️ Taquilla</th>
+                                            <th class="py-3 px-4">🚌 Andén</th>
+                                            <th class="py-3 px-4 text-right">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tabla-guardias" class="divide-y divide-white/5 text-sm text-slate-300"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="pt-4 border-t border-white/10">
+                            <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-3">Conteo Total de Guardias (Histórico)</h3>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4" id="conteo-guardias-grid"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 7. INCIDENCIAS -->
+                <section id="seccion-retardados" class="seccion-app hidden space-y-6">
+                    <div class="liquid-glass p-6 rounded-3xl space-y-4 border-amber-500/20">
+                        <div class="flex justify-between items-center border-b border-white/10 pb-4">
+                            <div>
+                                <h2 class="text-base font-bold text-white flex items-center space-x-2">
+                                    <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-400"></i>
+                                    <span>Control Acumulativo de Retardos (8h) y Ausencias (24h)</span>
+                                </h2>
+                                <p class="text-xs text-slate-400">Seguimiento de horas acumuladas por tardanzas e inasistencias.</p>
+                            </div>
+                            <span id="badge-total-retardos" class="bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold text-xs px-3 py-1.5 rounded-full">0 Colaboradores</span>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="border-b border-white/10 text-xs font-bold text-slate-400 uppercase tracking-wider bg-amber-500/5">
+                                        <th class="py-3 px-4">Cédula</th>
+                                        <th class="py-3 px-4">Trabajador</th>
+                                        <th class="py-3 px-4">Grupo de Trabajo</th>
+                                        <th class="py-3 px-4 text-center">Retardos (8h)</th>
+                                        <th class="py-3 px-4 text-center">Ausencias (24h)</th>
+                                        <th class="py-3 px-4">Deuda Total Acumulada</th>
+                                        <th class="py-3 px-4 text-right">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabla-retardados" class="divide-y divide-white/5 text-sm text-slate-300"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <div id="printable-report" style="display: none;"></div>
+
+    <!-- MODAL NUEVO EMPLEADO -->
+    <div id="modal-empleado" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden items-center justify-center p-4 z-50">
+        <div class="liquid-glass rounded-3xl max-w-md w-full p-6 shadow-2xl border border-white/20">
+            <h3 class="text-base font-bold text-white mb-4 flex items-center space-x-2">
+                <i data-lucide="user-plus" class="w-5 h-5 text-indigo-400"></i>
+                <span>Registrar Nuevo Trabajador</span>
+            </h3>
+            <form id="form-empleado" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Cédula</label>
+                    <input type="text" id="emp-cedula" class="w-full liquid-input rounded-xl p-2.5 text-xs" placeholder="Ej: V-12345678" required>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Nombre Completo</label>
+                    <input type="text" id="emp-nombre" class="w-full liquid-input rounded-xl p-2.5 text-xs" required>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Grupo de Trabajo / Área</label>
+                    <select id="emp-grupo" class="w-full liquid-input rounded-xl p-2.5 text-xs" required></select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Cargo</label>
+                    <input type="text" id="emp-cargo" class="w-full liquid-input rounded-xl p-2.5 text-xs" placeholder="Ej: Taquillero" required>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Departamento</label>
+                    <input type="text" id="emp-depto" class="w-full liquid-input rounded-xl p-2.5 text-xs" placeholder="Ej: Comercialización" required>
+                </div>
+                <div class="flex justify-end space-x-3 pt-2">
+                    <button type="button" onclick="cerrarModalEmpleado()" class="px-4 py-2 bg-white/10 hover:bg-white/20 text-slate-300 rounded-xl text-xs font-semibold transition">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold transition shadow-lg shadow-indigo-600/20">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL NUEVO GRUPO -->
+    <div id="modal-grupo" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden items-center justify-center p-4 z-50">
+        <div class="liquid-glass rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-white/20">
+            <h3 class="text-base font-bold text-white mb-4 flex items-center space-x-2">
+                <i data-lucide="folder-plus" class="w-5 h-5 text-purple-400"></i>
+                <span>Crear Grupo de Trabajo</span>
+            </h3>
+            <form id="form-grupo" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Nombre del Grupo / Área</label>
+                    <input type="text" id="grp-nombre" class="w-full liquid-input rounded-xl p-2.5 text-xs" placeholder="Ej: Terminal C o Logística" required>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Descripción corta</label>
+                    <input type="text" id="grp-desc" class="w-full liquid-input rounded-xl p-2.5 text-xs" placeholder="Ej: Turno rotativo matutino">
+                </div>
+                <div class="flex justify-end space-x-3 pt-2">
+                    <button type="button" onclick="cerrarModalGrupo()" class="px-4 py-2 bg-white/10 hover:bg-white/20 text-slate-300 rounded-xl text-xs font-semibold transition">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-semibold transition shadow-lg shadow-purple-600/20">Crear Grupo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- LÓGICA JAVASCRIPT INTEGRADA -->
+    <script>
+        let gruposTrabajo = JSON.parse(localStorage.getItem('rrhh_grupos')) || [
+            { id: 1, nombre: "Terminal A", descripcion: "Turno matutino principal" },
+            { id: 2, nombre: "Terminal B", descripcion: "Turno vespertino" },
+            { id: 3, nombre: "Andenes", descripcion: "Supervisión de plataformas y salidas" },
+            { id: 4, nombre: "Taquilla Central", descripcion: "Atención al usuario y taquillas" },
+            { id: 5, nombre: "Choferes", descripcion: "Personal de transporte oficial" }
+        ];
+
+        let empleados = JSON.parse(localStorage.getItem('rrhh_empleados')) || [
+            { cedula: "V-15234567", nombre: "Carlos Mendoza", grupo: "Terminal A", cargo: "Taquillero", depto: "Comercialización" },
+            { cedula: "V-18987654", nombre: "Mariana Rivas", grupo: "Terminal B", cargo: "Taquillera", depto: "Comercialización" },
+            { cedula: "V-12456789", nombre: "José Gregorio Silva", grupo: "Andenes", cargo: "Supervisor de Andén", depto: "Operaciones" },
+            { cedula: "V-16789123", nombre: "Ana Patricia Pérez", grupo: "Taquilla Central", cargo: "Atención al Usuario", depto: "Administración" },
+            { cedula: "V-14567890", nombre: "Luis Alberto Gómez", grupo: "Choferes", cargo: "Conductor", depto: "Transporte" },
+            { cedula: "V-19123456", nombre: "Dra. Carmen Soto", grupo: "Terminal A", cargo: "Médico Ocupacional / Atención Médica", depto: "Salud" }
+        ];
+
+        let asistencias = JSON.parse(localStorage.getItem('rrhh_asistencias')) || [];
+        let reposos = JSON.parse(localStorage.getItem('rrhh_reposos')) || [];
+        let guardias = JSON.parse(localStorage.getItem('rrhh_guardias')) || [];
+        let notificacionesSistema = JSON.parse(localStorage.getItem('rrhh_notificaciones')) || [];
+
+        function guardarDatos() {
+            localStorage.setItem('rrhh_grupos', JSON.stringify(gruposTrabajo));
+            localStorage.setItem('rrhh_empleados', JSON.stringify(empleados));
+            localStorage.setItem('rrhh_asistencias', JSON.stringify(asistencias));
+            localStorage.setItem('rrhh_reposos', JSON.stringify(reposos));
+            localStorage.setItem('rrhh_guardias', JSON.stringify(guardias));
+            localStorage.setItem('rrhh_notificaciones', JSON.stringify(notificacionesSistema));
+        }
+
+        function entrarAlSistema() {
+            const lockScreen = document.getElementById('ios-lock-screen');
+            lockScreen.classList.add('fade-out');
+            setTimeout(() => { lockScreen.style.display = 'none'; }, 600);
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const horaActual = new Date().getHours();
+            const saludoEl = document.getElementById('ios-saludo');
+            if (horaActual >= 5 && horaActual < 12) saludoEl.textContent = 'Buen día';
+            else if (horaActual >= 12 && horaActual < 19) saludoEl.textContent = 'Buenas tardes';
+            else saludoEl.textContent = 'Buenas noches';
+
+            document.getElementById('guardia-fecha').valueAsDate = new Date();
+            
+            // Verificar expiración de reposos al cargar el sistema
+            verificarRepososExpirados();
+            actualizarTodo();
+        });
+
+        // FUNCIÓN AUTOMÁTICA DE EXPIRACIÓN DE REPOSOS Y NOTIFICACIÓN
+        function verificarRepososExpirados() {
+            const hoyStr = new Date().toISOString().split('T')[0];
+            const hoyDate = new Date(hoyStr + 'T00:00:00');
+            
+            let repososActivos = [];
+            let cambios = false;
+
+            reposos.forEach(r => {
+                const finDate = new Date(r.fecFin + 'T00:00:00');
+                if (hoyDate > finDate) {
+                    // El reposo ya expiró: Se remueve del arreglo de reposos y se genera notificación
+                    cambios = true;
+                    notificacionesSistema.unshift({
+                        id: Date.now() + Math.random(),
+                        texto: `El reposo de <strong>${r.nombre}</strong> (${r.dias} días) ha finalizado y fue retirado automáticamente. Ya está apto.`,
+                        fecha: hoyStr,
+                        leida: false
+                    });
+                } else {
+                    repososActivos.push(r);
+                }
+            });
+
+            if (cambios) {
+                reposos = repososActivos;
+                guardarDatos();
+            }
+        }
+
+        function renderizarNotificacionesFlotantes() {
+            const contenedor = document.getElementById('contenedor-notificaciones');
+            // Tomar las últimas 3 notificaciones no leídas o recientes
+            const activas = notificacionesSistema.slice(0, 3);
+            
+            contenedor.innerHTML = activas.map(n => `
+                <div class="liquid-glass p-4 rounded-2xl border border-indigo-500/30 shadow-2xl pointer-events-auto flex items-start space-x-3 backdrop-blur-xl animate-fade-in">
+                    <div class="p-2 bg-indigo-500/20 text-indigo-300 rounded-xl mt-0.5">
+                        <i data-lucide="bell" class="w-4 h-4"></i>
+                    </div>
+                    <div class="flex-1 text-xs space-y-1">
+                        <p class="font-bold text-white uppercase tracking-wider text-[10px] text-indigo-300">Notificación de Sistema</p>
+                        <p class="text-slate-200">${n.texto}</p>
+                    </div>
+                    <button onclick="cerrarNotificacion(${n.id})" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-4 h-4"></i></button>
+                </div>
+            `).join('');
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        function cerrarNotificacion(id) {
+            notificacionesSistema = notificacionesSistema.filter(n => n.id !== id);
+            guardarDatos();
+            renderizarNotificacionesFlotantes();
+        }
+
+        function actualizarTodo() {
+            guardarDatos();
+            renderizarDashboard();
+            renderizarGrupos();
+            renderizarEmpleados();
+            renderizarSelectsGrupos();
+            renderizarSelectsEmpleados();
+            renderizarAsistencias();
+            renderizarReposos();
+            renderizarCheckboxOficiales();
+            renderizarGuardias();
+            renderizarRetardados();
+            renderizarNotificacionesFlotantes();
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        function cambiarSeccion(seccionId) {
+            document.querySelectorAll('.seccion-app').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`seccion-${seccionId}`).classList.remove('hidden');
+            
+            document.querySelectorAll('.nav-link').forEach(el => {
+                el.classList.remove('bg-indigo-600/80', 'text-white', 'shadow-lg', 'shadow-indigo-500/20', 'border', 'border-indigo-400/30');
+                el.classList.add('text-slate-300', 'hover:bg-white/5');
+            });
+            event.currentTarget.classList.add('bg-indigo-600/80', 'text-white', 'shadow-lg', 'shadow-indigo-500/20', 'border', 'border-indigo-400/30');
+            event.currentTarget.classList.remove('text-slate-300', 'hover:bg-white/5');
+            
+            const titulos = {
+                dashboard: 'Panel de Control General',
+                empleados: 'Directorio de Personal y Áreas',
+                grupos: 'Gestión de Grupos de Trabajo',
+                asistencias: 'Control de Asistencias y Jornada',
+                reposos: 'Control y Registro de Reposos Médicos',
+                guardias: 'Programación de Guardias (Terminal)',
+                retardados: 'Apartado de Incidencias (Retardos y Ausencias)'
+            };
+            document.getElementById('titulo-seccion').textContent = titulos[seccionId] || 'Sistema de Gestión';
+        }
+
+        function cambiarSeccionPorClick(seccionId) {
+            const enlace = document.querySelector(`[href="#${seccionId}"]`);
+            if (enlace) enlace.click();
+        }
+
+        function renderizarDashboard() {
+            document.getElementById('stat-total').textContent = empleados.length;
+            document.getElementById('stat-grupos').textContent = gruposTrabajo.length;
+        }
+
+        // CRUD GRUPOS
+        function abrirModalGrupo() { document.getElementById('modal-grupo').classList.remove('hidden'); document.getElementById('modal-grupo').classList.add('flex'); }
+        function cerrarModalGrupo() { document.getElementById('modal-grupo').classList.add('hidden'); document.getElementById('modal-grupo').classList.remove('flex'); document.getElementById('form-grupo').reset(); }
+
+        document.getElementById('form-grupo').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const nuevo = {
+                id: Date.now(),
+                nombre: document.getElementById('grp-nombre').value,
+                descripcion: document.getElementById('grp-desc').value || 'Sin descripción'
+            };
+            gruposTrabajo.push(nuevo);
+            cerrarModalGrupo();
+            actualizarTodo();
+        });
+
+        function eliminarGrupo(id) {
+            if (confirm('¿Desea eliminar este grupo de trabajo?')) {
+                gruposTrabajo = gruposTrabajo.filter(g => g.id !== id);
+                actualizarTodo();
+            }
+        }
+
+        function renderizarGrupos() {
+            const contenedor = document.getElementById('grid-grupos');
+            contenedor.innerHTML = gruposTrabajo.map(g => {
+                const totalMiembros = empleados.filter(e => e.grupo === g.nombre).length;
+                return `
+                    <div class="liquid-glass p-5 rounded-2xl flex flex-col justify-between space-y-4">
+                        <div class="flex justify-between items-start">
+                            <div class="flex items-center space-x-3">
+                                <div class="p-2.5 bg-purple-500/20 border border-purple-500/30 text-purple-300 rounded-xl">
+                                    <i data-lucide="layers" class="w-5 h-5"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-white text-sm">${g.nombre}</h3>
+                                    <p class="text-[11px] text-slate-400">${g.descripcion}</p>
+                                </div>
+                            </div>
+                            <button onclick="eliminarGrupo(${g.id})" class="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        </div>
+                        <div class="flex justify-between items-center pt-2 border-t border-white/5 text-xs">
+                            <span class="text-slate-400">Personal asignado:</span>
+                            <span class="px-2.5 py-1 bg-purple-500/20 text-purple-300 rounded-full font-bold">${totalMiembros} miembros</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderizarSelectsGrupos() {
+            const select = document.getElementById('emp-grupo');
+            select.innerHTML = gruposTrabajo.map(g => `<option value="${g.nombre}">${g.nombre}</option>`).join('');
+        }
+
+        // CRUD EMPLEADOS
+        function abrirModalEmpleado() { document.getElementById('modal-empleado').classList.remove('hidden'); document.getElementById('modal-empleado').classList.add('flex'); }
+        function cerrarModalEmpleado() { document.getElementById('modal-empleado').classList.add('hidden'); document.getElementById('modal-empleado').classList.remove('flex'); document.getElementById('form-empleado').reset(); }
+
+        document.getElementById('form-empleado').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const nuevo = {
+                cedula: document.getElementById('emp-cedula').value,
+                nombre: document.getElementById('emp-nombre').value,
+                grupo: document.getElementById('emp-grupo').value,
+                cargo: document.getElementById('emp-cargo').value,
+                depto: document.getElementById('emp-depto').value
+            };
+            empleados.push(nuevo);
+            cerrarModalEmpleado();
+            actualizarTodo();
+        });
+
+        function eliminarEmpleado(cedula) {
+            if (confirm('¿Desea eliminar este empleado del sistema?')) {
+                empleados = empleados.filter(e => e.cedula !== cedula);
+                actualizarTodo();
+            }
+        }
+
+        function renderizarEmpleados() {
+            const tbody = document.getElementById('tabla-empleados');
+            tbody.innerHTML = empleados.map(e => `
+                <tr class="border-b border-white/5">
+                    <td class="py-3 px-4 font-mono text-indigo-300 text-xs">${e.cedula}</td>
+                    <td class="py-3 px-4 font-semibold text-white text-xs">${e.nombre}</td>
+                    <td class="py-3 px-4 text-xs"><span class="px-2 py-1 bg-purple-500/20 border border-purple-500/30 rounded-lg text-purple-200">${e.grupo}</span></td>
+                    <td class="py-3 px-4 text-xs">${e.cargo}</td>
+                    <td class="py-3 px-4 text-xs text-slate-400">${e.depto}</td>
+                    <td class="py-3 px-4 text-right">
+                        <button onclick="eliminarEmpleado('${e.cedula}')" class="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+            document.getElementById('stat-total').textContent = empleados.length;
+        }
+
+        function renderizarSelectsEmpleados() {
+            const opciones = empleados.map(e => `<option value="${e.cedula}">${e.nombre} (${e.grupo})</option>`).join('');
+            document.getElementById('asist-empleado').innerHTML = opciones;
+            document.getElementById('reposo-empleado').innerHTML = opciones;
+        }
+
+        // ASISTENCIAS
+        document.getElementById('form-asistencia').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const cedula = document.getElementById('asist-empleado').value;
+            const emp = empleados.find(x => x.cedula === cedula);
+            const nuevaAsist = {
+                id: Date.now(),
+                fechaHora: new Date().toISOString().split('T')[0] + ' ' + document.getElementById('asist-hora').value,
+                cedula: cedula,
+                nombre: emp ? emp.nombre : 'Desconocido',
+                grupo: emp ? emp.grupo : 'General',
+                estado: document.getElementById('asist-estado').value
+            };
+            asistencias.unshift(nuevaAsist);
+            actualizarTodo();
+        });
+
+        function eliminarAsistencia(id) {
+            asistencias = asistencias.filter(a => a.id !== id);
+            actualizarTodo();
+        }
+
+        function renderizarAsistencias() {
+            const tbody = document.getElementById('tabla-asistencias');
+            const hoy = new Date().toISOString().split('T')[0];
+            let p = 0, r = 0, a = 0;
+
+            tbody.innerHTML = asistencias.map(item => {
+                if(item.fechaHora.startsWith(hoy)) {
+                    if(item.estado === 'Presente') p++;
+                    if(item.estado === 'Retardo') r++;
+                    if(item.estado === 'Ausente') a++;
+                }
+                const badgeColor = item.estado === 'Presente' ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' :
+                                   item.estado === 'Retardo' ? 'bg-amber-500/20 text-amber-300 border-amber-500/30' :
+                                   item.estado === 'Ausente' ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' : 'bg-blue-500/20 text-blue-300 border-blue-500/30';
+                return `
+                    <tr class="border-b border-white/5">
+                        <td class="py-3 px-4 font-mono text-xs text-slate-400">${item.fechaHora}</td>
+                        <td class="py-3 px-4 font-mono text-xs text-indigo-300">${item.cedula}</td>
+                        <td class="py-3 px-4 font-semibold text-white text-xs">${item.nombre}</td>
+                        <td class="py-3 px-4 text-xs">${item.grupo}</td>
+                        <td class="py-3 px-4 text-xs"><span class="px-2.5 py-1 border rounded-full font-medium ${badgeColor}">${item.estado}</span></td>
+                        <td class="py-3 px-4 text-right">
+                            <button onclick="eliminarAsistencia(${item.id})" class="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            document.getElementById('count-presente').textContent = p;
+            document.getElementById('count-retardo').textContent = r;
+            document.getElementById('count-ausente').textContent = a;
+            document.getElementById('stat-asistencias').textContent = p;
+        }
+
+        function filtrarAsistencias() {
+            const filtro = document.getElementById('filtro-asist').value.toLowerCase();
+            const filas = document.querySelectorAll('#tabla-asistencias tr');
+            filas.forEach(fila => {
+                fila.style.display = fila.innerText.toLowerCase().includes(filtro) ? '' : 'none';
+            });
+        }
+
+        // REPOSOS MÉDICOS
+        document.getElementById('form-reposo').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const cedula = document.getElementById('reposo-empleado').value;
+            const emp = empleados.find(x => x.cedula === cedula);
+            const fecInicio = document.getElementById('reposo-fec-inicio').value;
+            const dias = parseInt(document.getElementById('reposo-dias').value);
+            
+            let fFin = new Date(fecInicio + 'T00:00:00');
+            fFin.setDate(fFin.getDate() + dias);
+
+            const nuevoReposo = {
+                id: Date.now(),
+                cedula: cedula,
+                nombre: emp ? emp.nombre : '',
+                grupo: emp ? emp.grupo : '',
+                fecInicio: fecInicio,
+                fecFin: fFin.toISOString().split('T')[0],
+                dias: dias,
+                motivo: document.getElementById('reposo-motivo').value
+            };
+            reposos.unshift(nuevoReposo);
+            actualizarTodo();
+        });
+
+        function eliminarReposo(id) {
+            reposos = reposos.filter(r => r.id !== id);
+            actualizarTodo();
+        }
+
+        function renderizarReposos() {
+            const tbody = document.getElementById('tabla-reposos');
+            document.getElementById('badge-total-reposos').textContent = `${reposos.length} Reposos Registrados`;
+            tbody.innerHTML = reposos.map(r => `
+                <tr class="border-b border-white/5">
+                    <td class="py-3 px-4 font-mono text-indigo-300 text-xs">${r.cedula}</td>
+                    <td class="py-3 px-4 font-semibold text-white text-xs">${r.nombre}</td>
+                    <td class="py-3 px-4 text-xs">${r.grupo}</td>
+                    <td class="py-3 px-4 font-mono text-xs text-slate-300">${r.fecInicio} al ${r.fecFin}</td>
+                    <td class="py-3 px-4 text-center text-xs"><span class="px-2 py-0.5 bg-rose-500/20 text-rose-300 rounded-lg font-bold">${r.dias} días</span></td>
+                    <td class="py-3 px-4 text-xs text-slate-300">${r.motivo}</td>
+                    <td class="py-3 px-4 text-right">
+                        <button onclick="eliminarReposo(${r.id})" class="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // GUARDIAS
+        function empleadoEnReposo(cedula, fechaStr) {
+            if(!fechaStr) return false;
+            const f = new Date(fechaStr + 'T00:00:00');
+            return reposos.some(r => r.cedula === cedula && new Date(r.fecInicio + 'T00:00:00') <= f && new Date(r.fecFin + 'T00:00:00') >= f);
+        }
+
+        function renderizarCheckboxOficiales() {
+            const fechaVal = document.getElementById('guardia-fecha').value;
+            const contenedor = document.getElementById('lista-checkbox-oficiales');
+            
+            const disponibles = empleados.filter(e => {
+                const cargoLower = e.cargo.toLowerCase();
+                const deptoLower = e.depto.toLowerCase();
+                const grupoLower = e.grupo.toLowerCase();
+
+                // Excluir chóferes / conductores
+                const esChofer = cargoLower.includes('chofer') || cargoLower.includes('conductor') || grupoLower.includes('choferes');
+                
+                // Excluir personal médico / atención médica
+                const esMedico = cargoLower.includes('médico') || cargoLower.includes('medico') || cargoLower.includes('enfermer') || deptoLower.includes('salud') || cargoLower.includes('atención médica');
+
+                // Excluir personal con reposo temporal activo en esa fecha
+                const enReposo = empleadoEnReposo(e.cedula, fechaVal);
+
+                return !esChofer && !esMedico && !enReposo;
+            });
+
+            document.getElementById('contador-oficiales-autorizados').textContent = `${disponibles.length} disponibles`;
+
+            contenedor.innerHTML = disponibles.map(e => `
+                <label class="flex items-center space-x-3 p-2 bg-white/5 hover:bg-white/10 rounded-xl cursor-pointer border border-white/5 transition">
+                    <input type="checkbox" name="oficiales_guardia" value="${e.cedula}" class="rounded border-white/20 bg-slate-800 text-indigo-500 focus:ring-indigo-400 w-4 h-4">
+                    <div class="text-xs">
+                        <p class="font-bold text-white">${e.nombre}</p>
+                        <p class="text-[10px] text-slate-400">${e.grupo} • ${e.cargo}</p>
+                    </div>
+                </label>
+            `).join('');
+
+            const taquillaSelect = document.getElementById('guardia-taquilla');
+            const andenSelect = document.getElementById('guardia-anden');
+            const opts = disponibles.map(e => `<option value="${e.nombre}">${e.nombre} (${e.grupo})</option>`).join('');
+            taquillaSelect.innerHTML = opts;
+            andenSelect.innerHTML = opts;
+        }
+
+        function aplicarSugerenciaGuardia() {
+            const checkboxes = document.querySelectorAll('input[name="oficiales_guardia"]:checked');
+            if(checkboxes.length >= 2) {
+                document.getElementById('guardia-taquilla').value = empleados.find(e => e.cedula === checkboxes[0].value)?.nombre || '';
+                document.getElementById('guardia-anden').value = empleados.find(e => e.cedula === checkboxes[1].value)?.nombre || '';
+            } else if(checkboxes.length === 1) {
+                document.getElementById('guardia-taquilla').value = empleados.find(e => e.cedula === checkboxes[0].value)?.nombre || '';
+            }
+        }
+
+        document.getElementById('form-guardia').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const nuevaGuardia = {
+                id: Date.now(),
+                fecha: document.getElementById('guardia-fecha').value,
+                taquilla: document.getElementById('guardia-taquilla').value,
+                anden: document.getElementById('guardia-anden').value
+            };
+            guardias.unshift(nuevaGuardia);
+            actualizarTodo();
+        });
+
+        function eliminarGuardia(id) {
+            guardias = guardias.filter(g => g.id !== id);
+            actualizarTodo();
+        }
+
+        function renderizarGuardias() {
+            const tbody = document.getElementById('tabla-guardias');
+            tbody.innerHTML = guardias.map(g => `
+                <tr class="border-b border-white/5">
+                    <td class="py-3 px-4 font-mono text-xs text-emerald-300">${g.fecha}</td>
+                    <td class="py-3 px-4 text-xs font-semibold text-white">🎟️ ${g.taquilla}</td>
+                    <td class="py-3 px-4 text-xs font-semibold text-white">🚌 ${g.anden}</td>
+                    <td class="py-3 px-4 text-right">
+                        <button onclick="eliminarGuardia(${g.id})" class="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+
+            const conteo = {};
+            empleados.forEach(e => {
+                const cargoLower = e.cargo.toLowerCase();
+                const deptoLower = e.depto.toLowerCase();
+                const grupoLower = e.grupo.toLowerCase();
+                const esChofer = cargoLower.includes('chofer') || cargoLower.includes('conductor') || grupoLower.includes('choferes');
+                const esMedico = cargoLower.includes('médico') || cargoLower.includes('medico') || cargoLower.includes('enfermer') || deptoLower.includes('salud');
+                
+                if(!esChofer && !esMedico) {
+                    conteo[e.nombre] = 0;
+                }
+            });
+
+            guardias.forEach(g => {
+                if(conteo[g.taquilla] !== undefined) conteo[g.taquilla]++;
+                if(conteo[g.anden] !== undefined) conteo[g.anden]++;
+            });
+
+            const gridConteo = document.getElementById('conteo-guardias-grid');
+            gridConteo.innerHTML = Object.entries(conteo).map(([nombre, total]) => `
+                <div class="liquid-glass p-3 rounded-xl flex justify-between items-center text-xs">
+                    <span class="font-medium text-slate-300 truncate">${nombre}</span>
+                    <span class="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 font-bold rounded-full">${total} guardias</span>
+                </div>
+            `).join('');
+        }
+
+        // INCIDENCIAS / RETARDOS
+        function renderizarRetardados() {
+            const tbody = document.getElementById('tabla-retardados');
+            const acumulado = {};
+
+            empleados.forEach(e => {
+                acumulado[e.cedula] = { nombre: e.nombre, grupo: e.grupo, retardos: 0, ausencias: 0 };
+            });
+
+            asistencias.forEach(a => {
+                if(acumulado[a.cedula]) {
+                    if(a.estado === 'Retardo') acumulado[a.cedula].retardos++;
+                    if(a.estado === 'Ausente') acumulado[a.cedula].ausencias++;
+                }
+            });
+
+            const lista = Object.entries(acumulado).filter(([_, v]) => v.retardos > 0 || v.ausencias > 0);
+            document.getElementById('badge-total-retardos').textContent = `${lista.length} Colaboradores`;
+
+            tbody.innerHTML = lista.map(([cedula, datos]) => {
+                const totalHorasDeuda = (datos.retardos * 8) + (datos.ausencias * 24);
+                return `
+                    <tr class="border-b border-white/5">
+                        <td class="py-3 px-4 font-mono text-indigo-300 text-xs">${cedula}</td>
+                        <td class="py-3 px-4 font-semibold text-white text-xs">${datos.nombre}</td>
+                        <td class="py-3 px-4 text-xs">${datos.grupo}</td>
+                        <td class="py-3 px-4 text-center text-xs"><span class="px-2.5 py-1 bg-amber-500/20 text-amber-300 rounded-lg font-bold">${datos.retardos}</span></td>
+                        <td class="py-3 px-4 text-center text-xs"><span class="px-2.5 py-1 bg-rose-500/20 text-rose-300 rounded-lg font-bold">${datos.ausencias}</span></td>
+                        <td class="py-3 px-4 text-xs font-bold text-rose-400">${totalHorasDeuda} horas acumuladas</td>
+                        <td class="py-3 px-4 text-right">
+                            <span class="text-[10px] text-slate-400 uppercase font-semibold">Requiere Notificación</span>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // IMPRESIÓN CON FIRMAS
+        function imprimirCierreConFirmas() {
+            const reportDiv = document.getElementById('printable-report');
+            const hoy = new Date().toLocaleDateString();
+            
+            reportDiv.innerHTML = `
+                <div style="font-family: Arial, sans-serif; color: black; padding: 20px;">
+                    <div style="text-align: center; border-bottom: 2px solid black; padding-bottom: 15px; margin-bottom: 20px;">
+                        <h2>SISTEMA INTEGRAL DE GESTIÓN HUMANA</h2>
+                        <h3>CIERRE DE JORNADA Y CONTROL DIARIO DE ASISTENCIAS</h3>
+                        <p><strong>Fecha de Emisión:</strong> ${hoy} | <strong>Administrador:</strong> Dorila Labbarca</p>
+                    </div>
+                    
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
+                        <thead>
+                            <tr style="background: #f2f2f2; border-bottom: 1px solid black;">
+                                <th style="border: 1px solid #ccc; padding: 8px; text-align: left;">Hora / Fecha</th>
+                                <th style="border: 1px solid #ccc; padding: 8px; text-align: left;">Cédula</th>
+                                <th style="border: 1px solid #ccc; padding: 8px; text-align: left;">Trabajador</th>
+                                <th style="border: 1px solid #ccc; padding: 8px; text-align: left;">Grupo de Trabajo</th>
+                                <th style="border: 1px solid #ccc; padding: 8px; text-align: left;">Estado Registrado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${asistencias.map(a => `
+                                <tr>
+                                    <td style="border: 1px solid #ccc; padding: 6px;">${a.fechaHora}</td>
+                                    <td style="border: 1px solid #ccc; padding: 6px;">${a.cedula}</td>
+                                    <td style="border: 1px solid #ccc; padding: 6px;">${a.nombre}</td>
+                                    <td style="border: 1px solid #ccc; padding: 6px;">${a.grupo}</td>
+                                    <td style="border: 1px solid #ccc; padding: 6px; font-weight: bold;">${a.estado}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+
+                    <div style="margin-top: 50px; display: flex; justify-content: space-around; text-align: center;">
+                        <div style="border-top: 1px solid black; width: 40%; padding-top: 10px;">
+                            <p><strong>Dorila Labbarca</strong></p>
+                            <p>Administradora / Recursos Humanos</p>
+                        </div>
+                        <div style="border-top: 1px solid black; width: 40%; padding-top: 10px;">
+                            <p><strong>Control de Asistencia / Supervisión</strong></p>
+                            <p>Firma y Sello Autorizado</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            window.print();
+        }
+    </script>
+</body>
+</html>
