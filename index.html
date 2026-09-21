@@ -615,6 +615,10 @@
         <p class="text-[11px] text-ink-300 mt-1">Puedes tomar una foto directamente con la cámara del dispositivo o subir un PDF/imagen.</p>
         <p id="inc-upload-status" class="text-[11px] text-amber-600 mt-1"></p>
       </div>
+      <div>
+        <label class="text-xs font-semibold text-ink-300 uppercase tracking-wide">Link de Google Drive (opcional)</label>
+        <input type="url" id="inc-drive-url" placeholder="https://drive.google.com/..." class="w-full mt-1 px-3 py-2 rounded-lg border border-ink-100 dark:border-ink-700 bg-paper-50 dark:bg-ink-800 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-amber-500">
+      </div>
       <div class="pt-2 flex justify-end gap-2">
         <button type="button" data-close="modal-incidencia" class="px-4 py-2 rounded-lg text-sm font-semibold text-ink-500 dark:text-ink-300 hover:bg-paper-100 dark:hover:bg-ink-800">Cancelar</button>
         <button type="submit" class="px-4 py-2 rounded-lg bg-ink-900 hover:bg-ink-800 dark:bg-amber-500 dark:hover:bg-amber-400 dark:text-ink-950 text-white text-sm font-semibold">Guardar</button>
@@ -690,6 +694,10 @@
       <div>
         <label class="text-xs font-semibold text-ink-300 uppercase tracking-wide">Documento de soporte (opcional)</label>
         <input type="file" id="san-archivo" accept="image/*,application/pdf" capture="environment" class="w-full mt-1 text-xs">
+      </div>
+      <div>
+        <label class="text-xs font-semibold text-ink-300 uppercase tracking-wide">Link de Google Drive (opcional)</label>
+        <input type="url" id="san-drive-url" placeholder="https://drive.google.com/..." class="w-full mt-1 px-3 py-2 rounded-lg border border-ink-100 dark:border-ink-700 bg-paper-50 dark:bg-ink-800 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-amber-500">
       </div>
       <div class="pt-2 flex justify-end gap-2">
         <button type="button" data-close="modal-sancion" class="px-4 py-2 rounded-lg text-sm font-semibold text-ink-500 dark:text-ink-300 hover:bg-paper-100 dark:hover:bg-ink-800">Cancelar</button>
@@ -840,6 +848,10 @@
       <div>
         <label class="text-xs font-semibold text-ink-300 uppercase tracking-wide">Foto o soporte (opcional)</label>
         <input type="file" id="ben-archivo" accept="image/*,application/pdf" capture="environment" class="w-full mt-1 text-xs">
+      </div>
+      <div>
+        <label class="text-xs font-semibold text-ink-300 uppercase tracking-wide">Link de Google Drive (opcional)</label>
+        <input type="url" id="ben-drive-url" placeholder="https://drive.google.com/..." class="w-full mt-1 px-3 py-2 rounded-lg border border-ink-100 dark:border-ink-700 bg-paper-50 dark:bg-ink-800 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-amber-500">
       </div>
       <div class="pt-2 flex justify-end gap-2">
         <button type="button" data-close="modal-beneficio" class="px-4 py-2 rounded-lg text-sm font-semibold text-ink-500 dark:text-ink-300 hover:bg-paper-100 dark:hover:bg-ink-800">Cancelar</button>
@@ -2955,6 +2967,7 @@ function renderExpediente() {
             <p class="text-sm font-medium">${it.motivo}</p>
             <p class="text-xs text-ink-300 font-mono">${campos(it)}</p>
             ${renderAdjunto(it.documentoUrl, it.documentoTipo)}
+            ${it.driveUrl ? `<a href="${it.driveUrl}" target="_blank" class="block mt-1.5 text-xs text-amber-600 hover:underline">📁 Ver en Google Drive</a>` : ""}
           </div>
           <button data-del-inc="${tipo}::${it.id}" class="text-coral-500 hover:text-coral-700 text-xs shrink-0">🗑</button>
         </div>`).join("");
@@ -2986,6 +2999,7 @@ function renderExpediente() {
               <p class="text-sm font-medium">${s.motivo}</p>
               <p class="text-xs text-ink-300 font-mono">${s.duracionHoras}H · ${formatDateTimeDisplay(s.inicio)} → ${formatDateTimeDisplay(s.fin)} ${activa ? '· <span class="text-coral-600 dark:text-coral-400 font-semibold">Activa</span>' : ""}</p>
               ${renderAdjunto(s.documentoUrl, s.documentoTipo)}
+              ${s.driveUrl ? `<a href="${s.driveUrl}" target="_blank" class="block mt-1.5 text-xs text-amber-600 hover:underline">📁 Ver en Google Drive</a>` : ""}
             </div>
             <button data-del-inc="sanciones::${s.id}" class="text-coral-500 hover:text-coral-700 text-xs shrink-0">🗑</button>
           </div>`;
@@ -3031,6 +3045,7 @@ function renderExpediente() {
             ${b.descripcion ? `<p class="text-xs text-ink-300">${b.descripcion}</p>` : ""}
             <p class="text-xs text-ink-300 font-mono">Entregado: ${formatDateDisplay(b.fecha)}</p>
             ${renderAdjunto(b.documentoUrl, b.documentoTipo)}
+            ${b.driveUrl ? `<a href="${b.driveUrl}" target="_blank" class="block mt-1.5 text-xs text-amber-600 hover:underline">📁 Ver en Google Drive</a>` : ""}
           </div>
           <button data-del-inc="beneficios::${b.id}" class="text-coral-500 hover:text-coral-700 text-xs shrink-0">🗑</button>
         </div>`).join("")}
@@ -3149,9 +3164,10 @@ $("#form-incidencia").addEventListener("submit", async (e) => {
       documentoUrl = await subirArchivo(archivo, `${t.id}/${tipo}`);
       documentoTipo = archivo.type || "";
     }
+    const driveUrl = $("#inc-drive-url").value.trim();
     const nuevoItem = tipo === "amonestaciones"
-      ? { id: uid(), motivo: $("#inc-motivo").value.trim(), fecha: $("#inc-fecha-unica").value || todayISO(), documentoUrl, documentoTipo }
-      : { id: uid(), motivo: $("#inc-motivo").value.trim(), fechaInicio: $("#inc-fecha-inicio").value, fechaFin: $("#inc-fecha-fin").value, documentoUrl, documentoTipo };
+      ? { id: uid(), motivo: $("#inc-motivo").value.trim(), fecha: $("#inc-fecha-unica").value || todayISO(), documentoUrl, documentoTipo, driveUrl }
+      : { id: uid(), motivo: $("#inc-motivo").value.trim(), fechaInicio: $("#inc-fecha-inicio").value, fechaFin: $("#inc-fecha-fin").value, documentoUrl, documentoTipo, driveUrl };
 
     const listaActual = t[tipo] || [];
     await updateDoc(doc(db, COLL_TRABAJADORES, t.id), { [tipo]: [...listaActual, nuevoItem] });
@@ -3378,6 +3394,7 @@ $("#form-sancion").addEventListener("submit", async (e) => {
       fin: fin.toISOString(),
       documentoUrl,
       documentoTipo,
+      driveUrl: $("#san-drive-url").value.trim(),
     };
     const listaActual = t.sanciones || [];
     await updateDoc(doc(db, COLL_TRABAJADORES, t.id), { sanciones: [...listaActual, nuevaSancion] });
@@ -3505,6 +3522,7 @@ $("#form-beneficio").addEventListener("submit", async (e) => {
       descripcion: $("#ben-descripcion").value.trim(),
       fecha: $("#ben-fecha").value || todayISO(),
       documentoUrl, documentoTipo,
+      driveUrl: $("#ben-drive-url").value.trim(),
     };
     await updateDoc(doc(db, COLL_TRABAJADORES, t.id), { beneficios: [...(t.beneficios || []), nuevoBeneficio] });
     toast("Beneficio guardado");
@@ -3772,13 +3790,13 @@ function imprimirExpediente() {
           <p style="font-size:11px;color:#555;margin:2px 0 0;">Año de ingreso: ${t.anioIngreso || "—"}${t.anioIngreso ? ` (${new Date().getFullYear() - t.anioIngreso} año${(new Date().getFullYear() - t.anioIngreso) === 1 ? "" : "s"} de antigüedad)` : ""}</p>
         </div>
       </div>
-      ${seccion("Reposos médicos", t.reposos || [], it => `${it.motivo} — ${formatDateDisplay(it.fechaInicio)} → ${formatDateDisplay(it.fechaFin)}`)}
-      ${seccion("Permisos", t.permisos || [], it => `${it.motivo} — ${formatDateDisplay(it.fechaInicio)} → ${formatDateDisplay(it.fechaFin)}`)}
-      ${seccion("Vacaciones", t.vacaciones || [], it => `${it.motivo} — ${formatDateDisplay(it.fechaInicio)} → ${formatDateDisplay(it.fechaFin)}`)}
-      ${seccion("Amonestaciones", t.amonestaciones || [], it => `${it.motivo} — ${formatDateDisplay(it.fecha)}`)}
-      ${seccion("Sanciones", t.sanciones || [], it => `${it.motivo} — ${it.duracionHoras}H, ${formatDateTimeDisplay(it.inicio)} → ${formatDateTimeDisplay(it.fin)}`)}
+      ${seccion("Reposos médicos", t.reposos || [], it => `${it.motivo} — ${formatDateDisplay(it.fechaInicio)} → ${formatDateDisplay(it.fechaFin)}${it.driveUrl ? " · Drive: " + it.driveUrl : ""}`)}
+      ${seccion("Permisos", t.permisos || [], it => `${it.motivo} — ${formatDateDisplay(it.fechaInicio)} → ${formatDateDisplay(it.fechaFin)}${it.driveUrl ? " · Drive: " + it.driveUrl : ""}`)}
+      ${seccion("Vacaciones", t.vacaciones || [], it => `${it.motivo} — ${formatDateDisplay(it.fechaInicio)} → ${formatDateDisplay(it.fechaFin)}${it.driveUrl ? " · Drive: " + it.driveUrl : ""}`)}
+      ${seccion("Amonestaciones", t.amonestaciones || [], it => `${it.motivo} — ${formatDateDisplay(it.fecha)}${it.driveUrl ? " · Drive: " + it.driveUrl : ""}`)}
+      ${seccion("Sanciones", t.sanciones || [], it => `${it.motivo} — ${it.duracionHoras}H, ${formatDateTimeDisplay(it.inicio)} → ${formatDateTimeDisplay(it.fin)}${it.driveUrl ? " · Drive: " + it.driveUrl : ""}`)}
       ${seccion("Evaluaciones de desempeño", t.evaluaciones || [], it => `${it.calificacion} — ${it.comentarios} (${formatDateDisplay(it.fecha)})${it.driveUrl ? " · Drive: " + it.driveUrl : ""}`)}
-      ${seccion("Beneficios y herramientas de trabajo", t.beneficios || [], it => `${it.nombre}${it.descripcion ? " — " + it.descripcion : ""} (${formatDateDisplay(it.fecha)})`)}
+      ${seccion("Beneficios y herramientas de trabajo", t.beneficios || [], it => `${it.nombre}${it.descripcion ? " — " + it.descripcion : ""} (${formatDateDisplay(it.fecha)})${it.driveUrl ? " · Drive: " + it.driveUrl : ""}`)}
       ${seccion("Documentos adjuntos", t.documentos || [], d => `${d.nombre} — ${formatDateDisplay(d.fecha)}`)}
       <p style="font-size:10px;color:#999;margin-top:24px;">Generado el ${new Date().toLocaleString("es-ES")}</p>
     </div>`;
