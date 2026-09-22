@@ -44,9 +44,8 @@
   .dial-marker { transition: transform .3s ease; }
   @media (prefers-reduced-motion: reduce) { .fade-in, .toast-in, .dial-marker { animation: none !important; transition: none !important; } }
   @media print {
-    body * { visibility: hidden; }
-    #print-area, #print-area * { visibility: visible; }
-    #print-area { position: absolute; left: 0; top: 0; width: 100%; padding: 24px; }
+    body > *:not(#print-area) { display: none !important; }
+    #print-area { display: block !important; visibility: visible; position: static; width: 100%; padding: 24px; margin: 0; }
   }
 </style>
 </head>
