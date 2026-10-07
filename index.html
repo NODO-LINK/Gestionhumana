@@ -1472,6 +1472,66 @@ function registroEntradaEfectivo(trabajador, grupo, fechaISO, registroPropio) {
   return { registro: entradaPrimerDia, heredado: true };
 }
 
+// ===================== ENTRADA Y SALIDA POR SEPARADO =====================
+// La entrada (IN) y la salida (OUT) son registros distintos: cada trabajador tiene, por día,
+// su entrada (la PRIMERA IN del día; si no hay tipo, la primera marca) y su salida (la ÚLTIMA
+// OUT del día). Así una salida nunca reemplaza ni oculta a la entrada, y se muestran lado a lado.
+function construirMapaEntradaSalida(marcas) {
+  const mapa = new Map();
+  const t = (a) => a._fechaParsed ? a._fechaParsed.getTime() : null;
+  marcas.forEach(a => {
+    const ced = normalizarCedula(a[CAMPO_CEDULA]);
+    if (!ced) return;
+    const e = mapa.get(ced) || { entrada: null, salida: null, sinTipo: null };
+    const tipo = a[CAMPO_TIPO];
+    if (tipo === "OUT") {
+      if (!e.salida || (t(a) !== null && (t(e.salida) === null || t(a) > t(e.salida)))) e.salida = a;
+    } else if (tipo === "IN") {
+      if (!e.entrada || (t(a) !== null && (t(e.entrada) === null || t(a) < t(e.entrada)))) e.entrada = a;
+    } else if (!e.sinTipo || (t(a) !== null && (t(e.sinTipo) === null || t(a) < t(e.sinTipo)))) {
+      e.sinTipo = a;
+    }
+    mapa.set(ced, e);
+  });
+  mapa.forEach(e => { if (!e.entrada && e.sinTipo) e.entrada = e.sinTipo; delete e.sinTipo; });
+  return mapa;
+}
+
+// Entrada (propia o heredada del primer día de guardia) y salida de un trabajador en una fecha.
+function entradaSalidaDelDia(trabajador, grupo, fechaISO, mapa) {
+  const e = mapa.get(normalizarCedula(trabajador.cedula)) || { entrada: null, salida: null };
+  const { registro, heredado } = registroEntradaEfectivo(trabajador, grupo, fechaISO, e.entrada || null);
+  return { entrada: registro, salida: e.salida || null, heredado };
+}
+
+function horaCorta(registro) {
+  return registro?._fechaParsed ? registro._fechaParsed.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" }) : "";
+}
+
+// Chips "Entrada · hh:mm" y "Salida · hh:mm" lado a lado (cada uno con su ✏ o su botón 🕒).
+// attrCorregir / attrRegistrar: nombre del atributo data-* que usa cada pantalla para sus botones.
+function htmlEntradaSalida(trabajadorId, es, tardia, attrCorregir, attrRegistrar) {
+  const { entrada, salida, heredado } = es;
+  const btn = "text-[11px] font-semibold px-2 py-1 rounded-full bg-white dark:bg-ink-800 border border-ink-200 dark:border-ink-700 hover:bg-paper-100 dark:hover:bg-ink-700 shrink-0";
+  const editar = (tipo, title) => `<button ${attrCorregir}="${trabajadorId}" data-tipo="${tipo}" title="${title}" class="${btn}">✏</button>`;
+  const registrar = (tipo, texto, title) => `<button ${attrRegistrar}="${trabajadorId}" data-tipo="${tipo}" title="${title}" class="${btn}">${texto}</button>`;
+  let html = "";
+  if (entrada) {
+    const hora = horaCorta(entrada);
+    const cls = tardia ? "text-coral-600 dark:text-coral-400" : "text-sage-600 dark:text-sage-500";
+    const txt = tardia ? `⚠ Llegó tarde · ${hora}` : heredado ? `✓ Entrada (día 1) · ${hora}` : `✓ Entrada · ${hora}`;
+    html += `<span class="text-xs font-semibold ${cls} shrink-0">${txt}</span>${editar("IN", "Corregir hora de entrada")}`;
+  } else {
+    html += `<span class="text-xs font-semibold text-amber-600 dark:text-amber-400 shrink-0">Sin entrada</span>${registrar("IN", "🕒 Entrada", "Registrar la hora de entrada manualmente")}`;
+  }
+  if (salida) {
+    html += `<span class="text-xs font-semibold text-sky-600 dark:text-sky-400 shrink-0 ml-2">↗ Salida · ${horaCorta(salida)}</span>${editar("OUT", "Corregir hora de salida")}`;
+  } else {
+    html += `<span class="text-xs text-ink-300 shrink-0 ml-2">Salida: —</span>${registrar("OUT", "🕒 Salida", "Registrar la hora de salida manualmente")}`;
+  }
+  return html;
+}
+
 // ===================== MARCACIONES MANUALES / CORREGIDAS (registradas desde RRHH) =====================
 // Combina las marcaciones reales de la app de asistencia con:
 //  - correcciones de hora (cuando la app no abrió a tiempo y marcó una hora equivocada), y
@@ -1778,32 +1838,25 @@ function renderDashboard() {
     $("#dash-hoy-list").innerHTML = `<p class="text-sm text-ink-300 py-6 text-center">${esHoy ? "Nadie tiene guardia asignada para hoy." : "Nadie tenía guardia asignada ese día."}</p>`;
   } else {
     const marcasDelDia = esHoy ? state.asistenciasHoy : state.asistenciasTodas.filter(a => esDelDia(a._fechaParsed, fecha));
-    const mapaAsistenciaHoy = new Map();
-    marcasDelDia.forEach(a => {
-      const ced = normalizarCedula(a[CAMPO_CEDULA]);
-      if (!ced) return;
-      const existente = mapaAsistenciaHoy.get(ced);
-      if (!existente || (a._fechaParsed > existente._fechaParsed)) mapaAsistenciaHoy.set(ced, a);
-    });
+    const mapaAsistenciaHoy = construirMapaEntradaSalida(marcasDelDia);
 
     const filaHtml = (item) => {
       const { trabajador, grupo, conflicto, reposo, permiso, vacacion, sancion, cubreInfo, excusado, noProgramado, agregadoManual, inclusionId, motivoInclusion } = item;
-      const registroPropio = mapaAsistenciaHoy.get(normalizarCedula(trabajador.cedula));
-      const { registro, heredado } = registroEntradaEfectivo(trabajador, grupo, fecha, registroPropio);
-      const tardia = !heredado && registro && esEntradaTardia(registro._fechaParsed, registro[CAMPO_TIPO], minutosLimiteEntrada(grupo, fecha));
-      const hora = registro?._fechaParsed ? registro._fechaParsed.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" }) : "";
-      const tipoLabel = heredado ? "Entrada día 1" : registro?.[CAMPO_TIPO] === "OUT" ? "Salida" : "Entrada";
-      const sinMarcar = !registro && !conflicto && !excusado;
+      const es = entradaSalidaDelDia(trabajador, grupo, fecha, mapaAsistenciaHoy);
+      const { entrada, salida, heredado } = es;
+      const tardia = !heredado && entrada && esEntradaTardia(entrada._fechaParsed, entrada[CAMPO_TIPO], minutosLimiteEntrada(grupo, fecha));
+      const marco = !!(entrada || salida);
+      const sinMarcar = !marco && !conflicto && !excusado;
       const borde = tardia || conflicto ? "border-coral-500 bg-coral-50 dark:bg-coral-900/20"
         : sinMarcar ? "border-amber-400 bg-amber-50 dark:bg-amber-900/10"
         : noProgramado || cubreInfo ? "border-sky-400 bg-sky-50 dark:bg-sky-900/10"
         : "border-sage-500 bg-paper-50 dark:bg-ink-800/40";
       let etiquetaDerecha;
-      if (tardia) etiquetaDerecha = `<span class="text-xs font-semibold text-coral-600 dark:text-coral-400 shrink-0 ml-2">⚠ Llegó tarde · ${hora}</span><button data-corregir-hora="${trabajador.id}" title="Corregir hora (ej: la app no abrió a tiempo)" class="text-[11px] font-semibold px-2 py-1 rounded-full bg-white dark:bg-ink-800 border border-ink-200 dark:border-ink-700 hover:bg-paper-100 dark:hover:bg-ink-700 shrink-0 ml-2">✏ Corregir hora</button>`;
+      if (tardia) etiquetaDerecha = htmlEntradaSalida(trabajador.id, es, true, "data-corregir-hora", "data-registrar-hora");
       else if (conflicto) etiquetaDerecha = `<span class="text-xs font-semibold text-coral-600 dark:text-coral-500 text-right shrink-0 ml-2">⚠ ${noProgramado ? "Marcó asistencia estando de" : "Le toca guardia, pero está de"} ${reposo ? "reposo médico" : permiso ? "permiso" : vacacion ? "vacaciones" : "sanción (" + sancion.duracionHoras + "h)"}</span>`;
       else if (excusado) etiquetaDerecha = `<span class="text-xs font-semibold text-ink-500 dark:text-ink-300 shrink-0 ml-2" title="${excusado.motivo}">✓ Excusado</span><button data-revertir-excusado="${trabajador.id}" data-excepcion-id="${excusado.id}" title="Revertir esta excusa" class="text-[11px] font-semibold px-2 py-1 rounded-full bg-white dark:bg-ink-800 border border-ink-200 dark:border-ink-700 hover:bg-paper-100 dark:hover:bg-ink-700 shrink-0 ml-2">↩ Revertir</button>`;
       else if (sinMarcar) etiquetaDerecha = `<span class="text-xs font-semibold text-amber-600 dark:text-amber-400 shrink-0 ml-2">⚠ No ha marcado</span><button data-registrar-hora="${trabajador.id}" title="Registrar su hora manualmente (ej: no pudo abrir la app)" class="text-[11px] font-semibold px-2 py-1 rounded-full bg-white dark:bg-ink-800 border border-ink-200 dark:border-ink-700 hover:bg-paper-100 dark:hover:bg-ink-700 shrink-0 ml-2">🕒 Registrar hora</button><button data-omitir="${trabajador.id}" class="text-[11px] font-semibold px-2 py-1 rounded-full bg-white dark:bg-ink-800 border border-ink-200 dark:border-ink-700 hover:bg-paper-100 dark:hover:bg-ink-700 shrink-0 ml-2">Omitir</button>`;
-      else etiquetaDerecha = `<span class="text-xs font-semibold text-sage-600 dark:text-sage-500 shrink-0 ml-2">✓ ${tipoLabel} · ${hora}</span><button data-corregir-hora="${trabajador.id}" title="Corregir esta hora" class="text-[11px] font-semibold px-2 py-1 rounded-full bg-white dark:bg-ink-800 border border-ink-200 dark:border-ink-700 hover:bg-paper-100 dark:hover:bg-ink-700 shrink-0 ml-2">✏</button>`;
+      else etiquetaDerecha = htmlEntradaSalida(trabajador.id, es, false, "data-corregir-hora", "data-registrar-hora");
       if (agregadoManual) etiquetaDerecha += `<button data-quitar-inclusion="${trabajador.id}" data-inclusion-id="${inclusionId}" title="Quitar de la lista de este día" class="text-[11px] font-semibold px-2 py-1 rounded-full bg-white dark:bg-ink-800 border border-ink-200 dark:border-ink-700 text-ink-400 hover:bg-paper-100 dark:hover:bg-ink-700 shrink-0 ml-1">✕</button>`;
 
       const notaProgramacion = agregadoManual
@@ -1849,12 +1902,17 @@ function renderDashboard() {
       </div>`;
 
     $$("[data-omitir]").forEach(b => b.addEventListener("click", () => openOmitirModal(b.dataset.omitir, fecha)));
-    $$("[data-registrar-hora]").forEach(b => b.addEventListener("click", () => openMarcacionModal({ trabajadorIdFijo: b.dataset.registrarHora, fechaFija: fecha })));
+    $$("[data-registrar-hora]").forEach(b => b.addEventListener("click", () => openMarcacionModal({ trabajadorIdFijo: b.dataset.registrarHora, fechaFija: fecha, tipoFijo: b.dataset.tipo || "IN" })));
     $$("[data-corregir-hora]").forEach(b => b.addEventListener("click", () => {
       const t = state.trabajadores.find(x => x.id === b.dataset.corregirHora);
-      const registro = t ? mapaAsistenciaHoy.get(normalizarCedula(t.cedula)) : null;
+      const tipo = b.dataset.tipo === "OUT" ? "OUT" : "IN";
+      let registro = null;
+      if (t) {
+        const es = entradaSalidaDelDia(t, state.grupos.find(g => g.id === t.grupoId), fecha, mapaAsistenciaHoy);
+        registro = tipo === "OUT" ? es.salida : es.entrada;
+      }
       if (registro) openMarcacionModal({ registro });
-      else openMarcacionModal({ trabajadorIdFijo: b.dataset.corregirHora, fechaFija: fecha });
+      else openMarcacionModal({ trabajadorIdFijo: b.dataset.corregirHora, fechaFija: fecha, tipoFijo: tipo });
     }));
     $$("#dash-hoy-list [data-abrir-expediente]").forEach(b => b.addEventListener("click", () => openExpediente(b.dataset.abrirExpediente)));
     $$("[data-quitar-inclusion]").forEach(b => b.addEventListener("click", () => quitarInclusionManual(b.dataset.quitarInclusion, b.dataset.inclusionId)));
@@ -1959,10 +2017,9 @@ function estadoParaImprimir(item, registro, tipoLabel) {
 // ausencia ya está justificada y no hace falta que firme).
 function filaAsistenciaImprimir(item, mapaAsistencia, fecha) {
   const { trabajador, grupo } = item;
-  const registroPropio = mapaAsistencia.get(normalizarCedula(trabajador.cedula));
-  const { registro, heredado } = registroEntradaEfectivo(trabajador, grupo, fecha, registroPropio);
-  const hora = registro?._fechaParsed ? registro._fechaParsed.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" }) : "";
-  const tipoLabel = heredado ? "Entrada día 1" : registro?.[CAMPO_TIPO] === "OUT" ? "Salida" : registro?.[CAMPO_TIPO] === "IN" ? "Entrada" : "";
+  const { entrada, salida, heredado } = entradaSalidaDelDia(trabajador, grupo, fecha, mapaAsistencia);
+  const horaEntrada = horaCorta(entrada);
+  const horaSalida = horaCorta(salida);
   const firmaTexto = item.reposo
     ? `No asiste — Reposo médico${item.reposo.motivo ? " (" + item.reposo.motivo + ")" : ""}`
     : item.permiso
@@ -1970,8 +2027,9 @@ function filaAsistenciaImprimir(item, mapaAsistencia, fecha) {
       : "";
   return {
     nombre: trabajador.nombre, cedula: trabajador.cedula || "—", grupo: grupo?.nombre || "Calendario",
-    estado: estadoParaImprimir(item, registro, tipoLabel),
-    hora: hora || "—",
+    estado: estadoParaImprimir(item, entrada || salida, heredado ? "entrada día 1" : ""),
+    entrada: horaEntrada ? horaEntrada + (heredado ? " (día 1)" : "") : "—",
+    salida: horaSalida || "—",
     firmaTexto,
   };
 }
@@ -2003,17 +2061,11 @@ function agruparParaImprimirPorGrupo(programados, mapaAsistencia, fecha) {
 function imprimirDashboardDia() {
   const fecha = state.monitorFecha || todayISO();
   const marcasDelDia = fecha === todayISO() ? state.asistenciasHoy : state.asistenciasTodas.filter(a => esDelDia(a._fechaParsed, fecha));
-  const mapaAsistencia = new Map();
-  marcasDelDia.forEach(a => {
-    const ced = normalizarCedula(a[CAMPO_CEDULA]);
-    if (!ced) return;
-    const existente = mapaAsistencia.get(ced);
-    if (!existente || (a._fechaParsed > existente._fechaParsed)) mapaAsistencia.set(ced, a);
-  });
+  const mapaAsistencia = construirMapaEntradaSalida(marcasDelDia);
   const programados = calcularQuienTrabajaHoy(fecha);
   const grupos = agruparParaImprimirPorGrupo(programados, mapaAsistencia, fecha);
   imprimirTabla("Asistencia — " + formatDateDisplay(fecha),
-    [{ key: "nombre", label: "Trabajador" }, { key: "cedula", label: "Cédula" }, { key: "grupo", label: "Grupo" }, { key: "estado", label: "Estado" }, { key: "hora", label: "Hora" }, { key: "firma", label: "Firma", firma: true }],
+    [{ key: "nombre", label: "Trabajador" }, { key: "cedula", label: "Cédula" }, { key: "grupo", label: "Grupo" }, { key: "estado", label: "Estado" }, { key: "entrada", label: "Entrada" }, { key: "salida", label: "Salida" }, { key: "firma", label: "Firma", firma: true }],
     [], { firmasPie: true, grupos });
 }
 $("#btn-imprimir-dashboard").addEventListener("click", imprimirDashboardDia);
@@ -2086,7 +2138,7 @@ function eliminarMarcacion(registro) {
 }
 
 function openMarcacionModal(opts = {}) {
-  const { registro = null, trabajadorIdFijo = null, fechaFija = null } = opts;
+  const { registro = null, trabajadorIdFijo = null, fechaFija = null, tipoFijo = null } = opts;
   $("#form-marcacion").reset();
   $("#marc-doc-id").value = "";
   $("#marc-corrige-id").value = "";
@@ -2128,16 +2180,16 @@ function openMarcacionModal(opts = {}) {
       $("#marc-original-info").classList.remove("hidden");
       $("#marc-original-hora").textContent = horaOriginalTexto;
       $("#marc-motivo").value = "";
-      $("#modal-marcacion-titulo").textContent = "Corregir hora marcada";
+      $("#modal-marcacion-titulo").textContent = registro[CAMPO_TIPO] === "OUT" ? "Corregir hora de salida" : "Corregir hora de entrada";
     }
   } else {
     if (trabajadorIdFijo) $("#marc-trabajador").value = trabajadorIdFijo;
     $("#marc-fecha").value = fechaFija || state.monitorFecha || todayISO();
     const ahora = new Date();
     $("#marc-hora").value = `${String(ahora.getHours()).padStart(2, "0")}:${String(ahora.getMinutes()).padStart(2, "0")}`;
-    $("#marc-tipo").value = "IN";
+    $("#marc-tipo").value = tipoFijo === "OUT" ? "OUT" : "IN";
     $("#marc-motivo").value = "";
-    $("#modal-marcacion-titulo").textContent = "Registrar marcación manual";
+    $("#modal-marcacion-titulo").textContent = tipoFijo === "OUT" ? "Registrar salida manual" : tipoFijo === "IN" ? "Registrar entrada manual" : "Registrar marcación manual";
   }
   openModal("modal-marcacion");
 }
@@ -2370,14 +2422,8 @@ function renderAsistencia() {
   $("#asis-fecha-hoy").textContent = new Date().toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" });
   renderMonitor();
 
-  // Mapa cédula normalizada -> registro de asistencia más reciente de hoy
-  const mapaAsistencia = new Map();
-  state.asistenciasHoy.forEach(a => {
-    const ced = normalizarCedula(a[CAMPO_CEDULA]);
-    if (!ced) return;
-    const existente = mapaAsistencia.get(ced);
-    if (!existente || (a._fechaParsed > existente._fechaParsed)) mapaAsistencia.set(ced, a);
-  });
+  // Mapa cédula normalizada -> { entrada, salida } de hoy (registros separados)
+  const mapaAsistencia = construirMapaEntradaSalida(state.asistenciasHoy);
 
   const programadosHoy = calcularQuienTrabajaHoy();
   const presentes = programadosHoy.filter(({ trabajador }) => mapaAsistencia.has(normalizarCedula(trabajador.cedula)));
@@ -2404,12 +2450,10 @@ function renderAsistencia() {
     $("#asis-programados-list").innerHTML = `<p class="text-sm text-ink-300 py-6 text-center">Nadie tiene guardia programada para hoy.</p>`;
   } else {
     $("#asis-programados-list").innerHTML = programadosHoy.map(({ trabajador, grupo }) => {
-      const registroPropio = mapaAsistencia.get(normalizarCedula(trabajador.cedula));
-      const { registro, heredado } = registroEntradaEfectivo(trabajador, grupo, todayISO(), registroPropio);
-      const marco = !!registro;
-      const hora = registro?._fechaParsed ? registro._fechaParsed.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" }) : "";
-      const tipoLabel = heredado ? "Entrada (día 1)" : registro?.[CAMPO_TIPO] === "OUT" ? "Salida" : registro?.[CAMPO_TIPO] === "IN" ? "Entrada" : "";
-      const tardia = !heredado && marco && esEntradaTardia(registro._fechaParsed, registro[CAMPO_TIPO], minutosLimiteEntrada(grupo, todayISO()));
+      const es = entradaSalidaDelDia(trabajador, grupo, todayISO(), mapaAsistencia);
+      const { entrada, salida, heredado } = es;
+      const marco = !!(entrada || salida);
+      const tardia = !heredado && entrada && esEntradaTardia(entrada._fechaParsed, entrada[CAMPO_TIPO], minutosLimiteEntrada(grupo, todayISO()));
       return `
       <div class="p-3 rounded-xl border-l-4 ${tardia ? "border-coral-500 bg-coral-50 dark:bg-coral-900/20" : marco ? "border-sage-500 bg-paper-50 dark:bg-ink-800/40" : "border-coral-500 bg-coral-50 dark:bg-coral-900/20"} space-y-2">
         <div data-abrir-expediente="${trabajador.id}" class="flex items-center gap-3 min-w-0 cursor-pointer hover:opacity-80" title="Ver expediente de ${trabajador.nombre}">
@@ -2421,9 +2465,9 @@ function renderAsistencia() {
         </div>
         <div class="flex items-center justify-end flex-wrap gap-1.5">
           ${tardia
-            ? `<span class="text-xs font-semibold text-coral-600 dark:text-coral-400">⚠ Tarde · ${hora}</span><button data-corregir-asis="${trabajador.id}" title="Corregir hora" class="text-[11px] font-semibold px-2 py-1 rounded-full bg-white dark:bg-ink-800 border border-ink-200 dark:border-ink-700 hover:bg-paper-100 dark:hover:bg-ink-700">✏</button><button data-sancionar-tarde="${trabajador.id}" class="text-[11px] font-semibold px-2 py-1 rounded-full bg-coral-600 hover:bg-coral-700 text-white">Sancionar 8h</button>`
+            ? `${htmlEntradaSalida(trabajador.id, es, true, "data-corregir-asis", "data-registrar-asis")}<button data-sancionar-tarde="${trabajador.id}" class="text-[11px] font-semibold px-2 py-1 rounded-full bg-coral-600 hover:bg-coral-700 text-white">Sancionar 8h</button>`
             : marco
-              ? `<span class="text-xs font-semibold text-sage-600 dark:text-sage-500">✓ ${tipoLabel || "Asistió"} · ${hora}</span><button data-corregir-asis="${trabajador.id}" title="Corregir hora" class="text-[11px] font-semibold px-2 py-1 rounded-full bg-white dark:bg-ink-800 border border-ink-200 dark:border-ink-700 hover:bg-paper-100 dark:hover:bg-ink-700">✏</button>`
+              ? htmlEntradaSalida(trabajador.id, es, false, "data-corregir-asis", "data-registrar-asis")
               : `<span class="text-xs font-semibold text-coral-600 dark:text-coral-500">✗ No ha marcado</span><button data-registrar-asis="${trabajador.id}" title="Registrar su hora manualmente" class="text-[11px] font-semibold px-2 py-1 rounded-full bg-white dark:bg-ink-800 border border-ink-200 dark:border-ink-700 hover:bg-paper-100 dark:hover:bg-ink-700">🕒 Registrar</button>`}
         </div>
       </div>`;
@@ -2433,11 +2477,13 @@ function renderAsistencia() {
       const t = state.trabajadores.find(x => x.id === b.dataset.corregirAsis);
       if (!t) return;
       const grupoT = state.grupos.find(g => g.id === t.grupoId);
-      const registroPropio = mapaAsistencia.get(normalizarCedula(t.cedula));
-      const { registro } = registroEntradaEfectivo(t, grupoT, todayISO(), registroPropio);
+      const tipo = b.dataset.tipo === "OUT" ? "OUT" : "IN";
+      const es = entradaSalidaDelDia(t, grupoT, todayISO(), mapaAsistencia);
+      const registro = tipo === "OUT" ? es.salida : es.entrada;
       if (registro) openMarcacionModal({ registro });
+      else openMarcacionModal({ trabajadorIdFijo: t.id, fechaFija: todayISO(), tipoFijo: tipo });
     }));
-    $$("[data-registrar-asis]").forEach(b => b.addEventListener("click", () => openMarcacionModal({ trabajadorIdFijo: b.dataset.registrarAsis, fechaFija: todayISO() })));
+    $$("[data-registrar-asis]").forEach(b => b.addEventListener("click", () => openMarcacionModal({ trabajadorIdFijo: b.dataset.registrarAsis, fechaFija: todayISO(), tipoFijo: b.dataset.tipo || "IN" })));
     $$("#asis-programados-list [data-abrir-expediente]").forEach(b => b.addEventListener("click", () => openExpediente(b.dataset.abrirExpediente)));
   }
 
@@ -3643,17 +3689,11 @@ function imprimirTabla(titulo, columnas, filas, opciones = {}) {
 }
 
 function imprimirAsistenciaHoy() {
-  const mapaAsistencia = new Map();
-  state.asistenciasHoy.forEach(a => {
-    const ced = normalizarCedula(a[CAMPO_CEDULA]);
-    if (!ced) return;
-    const existente = mapaAsistencia.get(ced);
-    if (!existente || (a._fechaParsed > existente._fechaParsed)) mapaAsistencia.set(ced, a);
-  });
+  const mapaAsistencia = construirMapaEntradaSalida(state.asistenciasHoy);
   const programadosHoy = calcularQuienTrabajaHoy();
   const grupos = agruparParaImprimirPorGrupo(programadosHoy, mapaAsistencia, todayISO());
   imprimirTabla("Asistencia diaria — " + new Date().toLocaleDateString("es-ES"),
-    [{ key: "nombre", label: "Trabajador" }, { key: "cedula", label: "Cédula" }, { key: "grupo", label: "Grupo" }, { key: "estado", label: "Estado" }, { key: "hora", label: "Hora" }, { key: "firma", label: "Firma", firma: true }],
+    [{ key: "nombre", label: "Trabajador" }, { key: "cedula", label: "Cédula" }, { key: "grupo", label: "Grupo" }, { key: "estado", label: "Estado" }, { key: "entrada", label: "Entrada" }, { key: "salida", label: "Salida" }, { key: "firma", label: "Firma", firma: true }],
     [], { firmasPie: true, grupos });
 }
 $("#btn-imprimir-asistencia").addEventListener("click", imprimirAsistenciaHoy);
