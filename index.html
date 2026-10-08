@@ -140,6 +140,7 @@
         <div class="flex items-center justify-between flex-wrap gap-2">
           <p class="text-sm text-ink-300 font-mono" id="trab-count-label">0 trabajadores</p>
           <div class="flex items-center gap-2">
+            <button id="btn-cumpleanos" class="px-3 py-2 rounded-lg border border-ink-200 dark:border-ink-700 text-ink-700 dark:text-ink-200 text-xs font-semibold hover:bg-paper-100 dark:hover:bg-ink-800">🎂 Cumpleaños</button>
             <button id="btn-imprimir-trabajadores" class="px-3 py-2 rounded-lg border border-ink-200 dark:border-ink-700 text-ink-700 dark:text-ink-200 text-xs font-semibold hover:bg-paper-100 dark:hover:bg-ink-800">🖨 Imprimir</button>
             <button id="btn-imprimir-firmas-todos" class="px-3 py-2 rounded-lg border border-ink-200 dark:border-ink-700 text-ink-700 dark:text-ink-200 text-xs font-semibold hover:bg-paper-100 dark:hover:bg-ink-800">🖊 Hoja de firmas</button>
             <button id="btn-importar-users" class="px-4 py-2 rounded-lg border border-ink-200 dark:border-ink-700 text-ink-700 dark:text-ink-200 text-sm font-semibold hover:bg-paper-100 dark:hover:bg-ink-800">⇩ Importar de asistencia</button>
@@ -366,6 +367,10 @@
         <div>
           <label class="text-xs font-semibold text-ink-300 uppercase tracking-wide">Año de ingreso</label>
           <input type="number" id="t-anio-ingreso" min="1950" max="2100" placeholder="Ej: 2020" class="w-full mt-1 px-3 py-2 rounded-lg border border-ink-100 dark:border-ink-700 bg-paper-50 dark:bg-ink-800 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-amber-500">
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-ink-300 uppercase tracking-wide">Fecha de nacimiento</label>
+          <input type="date" id="t-fecha-nacimiento" class="w-full mt-1 px-3 py-2 rounded-lg border border-ink-100 dark:border-ink-700 bg-paper-50 dark:bg-ink-800 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-amber-500">
         </div>
       </div>
       <div>
@@ -993,6 +998,26 @@
         <button type="submit" class="px-4 py-2 rounded-lg bg-ink-900 hover:bg-ink-800 dark:bg-amber-500 dark:hover:bg-amber-400 dark:text-ink-950 text-white text-sm font-semibold">Guardar</button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- ===================== MODAL: CUMPLEAÑOS ===================== -->
+<div id="modal-cumpleanos" class="hidden fixed inset-0 z-[60] modal-backdrop bg-ink-950/50 flex items-center justify-center p-4">
+  <div class="fade-in bg-white dark:bg-ink-900 rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col border border-ink-100 dark:border-ink-800">
+    <div class="flex items-center justify-between p-5 pb-3">
+      <div>
+        <h3 class="font-display font-bold text-lg text-ink-900 dark:text-white">🎂 Cumpleaños del personal</h3>
+        <p id="cumple-resumen" class="text-xs text-ink-300 font-mono mt-0.5"></p>
+      </div>
+      <button data-close="modal-cumpleanos" class="text-ink-300 hover:text-ink-700 dark:hover:text-white text-xl leading-none">×</button>
+    </div>
+    <div class="px-5 pb-3 flex items-center gap-2 flex-wrap">
+      <select id="cumple-filtro" class="px-3 py-2 rounded-lg border border-ink-100 dark:border-ink-700 bg-paper-50 dark:bg-ink-800 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"></select>
+      <button id="btn-imprimir-hoja-fechas" title="Hoja con nombre y cédula y la fecha de nacimiento en blanco, para que cada trabajador la escriba" class="px-3 py-2 rounded-lg border border-ink-200 dark:border-ink-700 text-ink-700 dark:text-ink-200 text-xs font-semibold hover:bg-paper-100 dark:hover:bg-ink-800">🖨 Hoja para llenar fechas</button>
+      <button id="btn-imprimir-cumpleanos" class="px-3 py-2 rounded-lg border border-ink-200 dark:border-ink-700 text-ink-700 dark:text-ink-200 text-xs font-semibold hover:bg-paper-100 dark:hover:bg-ink-800">🖨 Imprimir lista</button>
+      <p class="text-[11px] text-ink-300 flex-1 min-w-[180px]">La cédula no trae la fecha de nacimiento: escríbela aquí en cada trabajador y se guarda sola.</p>
+    </div>
+    <div id="cumple-lista" class="px-5 pb-5 overflow-y-auto space-y-1.5"></div>
   </div>
 </div>
 
@@ -2676,6 +2701,7 @@ function openTrabajadorModal(id) {
   $("#t-telefono").value = t?.telefono || "";
   $("#t-correo").value = t?.correo || "";
   $("#t-anio-ingreso").value = t?.anioIngreso || "";
+  $("#t-fecha-nacimiento").value = t?.fechaNacimiento || "";
   $("#t-direccion").value = t?.direccion || "";
   $("#t-estatus").value = t?.estatus || "activo";
   $("#t-categoria").value = t?.categoria || "Grupos";
@@ -2703,6 +2729,7 @@ $("#form-trabajador").addEventListener("submit", async (e) => {
     telefono: $("#t-telefono").value.trim(),
     correo: $("#t-correo").value.trim(),
     anioIngreso: $("#t-anio-ingreso").value ? Number($("#t-anio-ingreso").value) : null,
+    fechaNacimiento: $("#t-fecha-nacimiento").value || null,
     direccion: $("#t-direccion").value.trim(),
     estatus: $("#t-estatus").value,
     categoria: $("#t-categoria").value,
@@ -2993,6 +3020,7 @@ function renderExpediente() {
       <div><p class="text-xs text-ink-300 uppercase tracking-wide">Correo</p><p class="font-medium font-mono truncate">${t.correo || "—"}</p></div>
       <div><p class="text-xs text-ink-300 uppercase tracking-wide">Dirección</p><p class="font-medium">${t.direccion || "—"}</p></div>
       <div><p class="text-xs text-ink-300 uppercase tracking-wide">Año de ingreso</p><p class="font-medium font-display">${t.anioIngreso || "—"}${antiguedadAnios !== null ? ` <span class="text-xs text-ink-300 font-sans">(${antiguedadAnios} año${antiguedadAnios === 1 ? "" : "s"})</span>` : ""}</p></div>
+      <div><p class="text-xs text-ink-300 uppercase tracking-wide">Cumpleaños</p><p class="font-medium font-display">${(() => { const fn = parseFechaNac(t.fechaNacimiento); return fn ? `${textoCumple(fn)} <span class="text-xs text-ink-300 font-sans">(${edadActual(fn)} años)</span>` : "—"; })()}</p></div>
       <div><p class="text-xs text-ink-300 uppercase tracking-wide">Días de reposo acumulados</p><p class="font-medium font-display">${(t.reposos || []).length}</p></div>
       <div><p class="text-xs text-ink-300 uppercase tracking-wide">Períodos de vacaciones</p><p class="font-medium font-display">${(t.vacaciones || []).length}</p></div>
       <div><p class="text-xs text-ink-300 uppercase tracking-wide">Amonestaciones acumuladas</p><p class="font-medium font-display">${(t.amonestaciones || []).length}</p></div>
@@ -3709,6 +3737,151 @@ function imprimirTrabajadores() {
     filas);
 }
 $("#btn-imprimir-trabajadores").addEventListener("click", imprimirTrabajadores);
+
+// ===================== CUMPLEAÑOS =====================
+// La fecha de nacimiento se guarda en cada trabajador (fechaNacimiento, "YYYY-MM-DD"). No se
+// puede sacar del número de cédula (no la contiene), así que se escribe una vez y de ahí se arma
+// la lista ordenada por mes y día. Todo con fechas locales (nunca toISOString).
+const MESES_ES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+const capitalizar = (txt) => txt.charAt(0).toUpperCase() + txt.slice(1);
+
+function parseFechaNac(iso) {
+  if (!iso || typeof iso !== "string") return null;
+  const [y, m, d] = iso.split("-").map(Number);
+  if (!y || !m || !d) return null;
+  return { y, m, d };
+}
+
+// Próximo cumpleaños: { dias hasta él, edad que cumple }
+function proximoCumple(fn, hoy = new Date()) {
+  const h0 = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+  let prox = new Date(h0.getFullYear(), fn.m - 1, fn.d);
+  if (prox < h0) prox = new Date(h0.getFullYear() + 1, fn.m - 1, fn.d);
+  return { dias: Math.round((prox - h0) / 86400000), edad: prox.getFullYear() - fn.y };
+}
+
+function edadActual(fn, hoy = new Date()) {
+  let e = hoy.getFullYear() - fn.y;
+  if (hoy.getMonth() + 1 < fn.m || (hoy.getMonth() + 1 === fn.m && hoy.getDate() < fn.d)) e--;
+  return e;
+}
+
+// Lista ordenada: con fecha por mes/día (luego nombre); sin fecha al final por nombre.
+function listaCumpleanos() {
+  const conFecha = [], sinFecha = [];
+  state.trabajadores.forEach(t => {
+    const fn = parseFechaNac(t.fechaNacimiento);
+    if (fn) conFecha.push({ t, fn }); else sinFecha.push({ t, fn: null });
+  });
+  conFecha.sort((a, b) => (a.fn.m - b.fn.m) || (a.fn.d - b.fn.d) || a.t.nombre.localeCompare(b.t.nombre));
+  sinFecha.sort((a, b) => a.t.nombre.localeCompare(b.t.nombre));
+  return { conFecha, sinFecha };
+}
+
+function textoCumple(fn) { return `${fn.d} de ${MESES_ES[fn.m - 1]}`; }
+
+function renderCumpleanos() {
+  const { conFecha, sinFecha } = listaCumpleanos();
+  const total = state.trabajadores.length;
+  $("#cumple-resumen").textContent = `${conFecha.length} de ${total} con fecha registrada${sinFecha.length ? " · " + sinFecha.length + " sin fecha" : ""}`;
+  const filtro = $("#cumple-filtro").value;
+  let items;
+  if (filtro === "sin") items = sinFecha;
+  else if (filtro) items = conFecha.filter(x => x.fn.m === Number(filtro));
+  else items = [...conFecha, ...sinFecha];
+
+  if (items.length === 0) { $("#cumple-lista").innerHTML = `<p class="text-sm text-ink-300 py-6 text-center">Nada que mostrar.</p>`; return; }
+  let mesActual = null;
+  $("#cumple-lista").innerHTML = items.map(({ t, fn }) => {
+    let cabecera = "";
+    const clave = fn ? fn.m : 0;
+    if (!filtro && clave !== mesActual) {
+      mesActual = clave;
+      cabecera = `<p class="text-xs font-semibold text-ink-500 dark:text-ink-300 uppercase tracking-wide pt-3 pb-1">${fn ? capitalizar(MESES_ES[fn.m - 1]) : "Sin fecha registrada"}</p>`;
+    }
+    let badge = "";
+    if (fn) {
+      const { dias, edad } = proximoCumple(fn);
+      badge = dias === 0 ? `<span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 shrink-0">🎉 Hoy · ${edad} años</span>`
+        : dias <= 30 ? `<span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-400 shrink-0">en ${dias} día${dias === 1 ? "" : "s"} · ${edad} años</span>` : "";
+    }
+    return `${cabecera}
+    <div class="flex items-center gap-2 p-2 rounded-lg border border-ink-100 dark:border-ink-800 ${fn ? "" : "bg-amber-50 dark:bg-amber-900/10"}">
+      <div class="min-w-0 flex-1">
+        <p class="text-sm font-semibold truncate">${t.nombre}${t.estatus !== "activo" ? ` <span class="text-[10px] text-ink-300 font-normal">(inactivo)</span>` : ""}</p>
+        <p class="text-xs text-ink-300 font-mono truncate">CI ${t.cedula || "—"}${fn ? " · " + textoCumple(fn) : ""}</p>
+      </div>
+      ${badge}
+      <input type="date" data-cumple-id="${t.id}" value="${t.fechaNacimiento || ""}" max="${todayISO()}" class="px-2 py-1.5 rounded-lg border border-ink-100 dark:border-ink-700 bg-paper-50 dark:bg-ink-800 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-amber-500 shrink-0">
+      <span data-cumple-ok="${t.id}" class="w-4 text-sage-600 text-sm shrink-0"></span>
+    </div>`;
+  }).join("");
+}
+
+function openCumpleanosModal() {
+  const { conFecha } = listaCumpleanos();
+  const porMes = Array.from({ length: 12 }, (_, i) => conFecha.filter(x => x.fn.m === i + 1).length);
+  $("#cumple-filtro").innerHTML = `<option value="">Todos los meses</option>`
+    + MESES_ES.map((m, i) => `<option value="${i + 1}">${capitalizar(m)} (${porMes[i]})</option>`).join("")
+    + `<option value="sin">Sin fecha registrada</option>`;
+  renderCumpleanos();
+  openModal("modal-cumpleanos");
+}
+$("#btn-cumpleanos").addEventListener("click", openCumpleanosModal);
+$("#cumple-filtro").addEventListener("change", renderCumpleanos);
+
+// Guardado automático al elegir la fecha (sin reordenar la lista mientras se escribe;
+// se reordena al cambiar el filtro o al volver a abrir).
+$("#cumple-lista").addEventListener("change", async (e) => {
+  const input = e.target.closest("[data-cumple-id]");
+  if (!input) return;
+  const id = input.dataset.cumpleId;
+  const t = state.trabajadores.find(x => x.id === id);
+  const ok = document.querySelector(`[data-cumple-ok="${id}"]`);
+  if (!t) return;
+  try {
+    await updateDoc(doc(db, COLL_TRABAJADORES, id), { fechaNacimiento: input.value || null, actualizado: serverTimestamp() });
+    t.fechaNacimiento = input.value || null;
+    if (ok) { ok.textContent = "✓"; setTimeout(() => { ok.textContent = ""; }, 1800); }
+    const { conFecha, sinFecha } = listaCumpleanos();
+    $("#cumple-resumen").textContent = `${conFecha.length} de ${state.trabajadores.length} con fecha registrada${sinFecha.length ? " · " + sinFecha.length + " sin fecha" : ""}`;
+  } catch (err) {
+    toast("Error al guardar: " + err.message, "error");
+  }
+});
+
+function imprimirCumpleanos() {
+  const { conFecha, sinFecha } = listaCumpleanos();
+  const fila = ({ t, fn }) => ({
+    nombre: t.nombre, cedula: t.cedula || "—", cargo: t.cargo || "—",
+    cumple: fn ? textoCumple(fn) : "—",
+    nacimiento: fn ? formatDateDisplay(t.fechaNacimiento) : "—",
+    edad: fn ? proximoCumple(fn).edad + " años" : "—",
+  });
+  const grupos = MESES_ES.map((m, i) => ({
+    titulo: capitalizar(m),
+    filas: conFecha.filter(x => x.fn.m === i + 1).map(fila),
+  })).filter(g => g.filas.length);
+  if (sinFecha.length) grupos.push({ titulo: "Sin fecha registrada", filas: sinFecha.map(fila) });
+  imprimirTabla("Cumpleaños del personal",
+    [{ key: "nombre", label: "Trabajador" }, { key: "cedula", label: "Cédula" }, { key: "cargo", label: "Cargo" }, { key: "cumple", label: "Cumpleaños" }, { key: "nacimiento", label: "Nacimiento" }, { key: "edad", label: "Cumple" }],
+    [], { grupos });
+}
+$("#btn-imprimir-cumpleanos").addEventListener("click", imprimirCumpleanos);
+
+// Hoja para que cada trabajador escriba su fecha de nacimiento a mano: N°, nombre, cédula y una
+// línea en blanco. Si alguien ya tiene la fecha cargada, sale escrita en lugar de la línea.
+function imprimirHojaFechasNacimiento() {
+  const ordenados = state.trabajadores.slice().sort((a, b) => a.nombre.localeCompare(b.nombre));
+  const filas = ordenados.map((t, i) => ({
+    n: i + 1, nombre: t.nombre, cedula: t.cedula || "—",
+    firmaTexto: parseFechaNac(t.fechaNacimiento) ? formatDateDisplay(t.fechaNacimiento) : "",
+  }));
+  imprimirTabla("Registro de fecha de nacimiento — escribir a mano (día / mes / año)",
+    [{ key: "n", label: "N°" }, { key: "nombre", label: "Trabajador" }, { key: "cedula", label: "Cédula" }, { key: "fecha", label: "Fecha de nacimiento", firma: true }],
+    filas);
+}
+$("#btn-imprimir-hoja-fechas").addEventListener("click", imprimirHojaFechasNacimiento);
 
 // ===================== HOJAS DE FIRMA (ahorrando papel con 2 columnas) =====================
 // Roster general: todos los trabajadores activos en una sola hoja, en 2 columnas,
