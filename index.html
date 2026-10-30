@@ -155,7 +155,10 @@
       <section id="view-grupos" class="hidden space-y-4">
         <div class="flex items-center justify-between">
           <p class="text-sm text-ink-300 font-mono">Grupos rotativos y de calendario</p>
+          <div class="flex items-center gap-2">
+          <button id="btn-imprimir-grupos" class="px-3 py-2 rounded-lg border border-ink-200 dark:border-ink-700 text-ink-700 dark:text-ink-200 text-xs font-semibold hover:bg-paper-100 dark:hover:bg-ink-800">🖨 Imprimir grupos</button>
           <button id="btn-nuevo-grupo" class="px-4 py-2 rounded-lg bg-ink-900 hover:bg-ink-800 dark:bg-amber-500 dark:hover:bg-amber-400 dark:text-ink-950 text-white text-sm font-semibold shadow-sm">+ Nuevo grupo</button>
+          </div>
         </div>
         <div id="grupos-grid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4"></div>
       </section>
@@ -365,8 +368,12 @@
       </div>
       <div class="grid grid-cols-2 gap-3">
         <div>
-          <label class="text-xs font-semibold text-ink-300 uppercase tracking-wide">Año de ingreso</label>
+          <label class="text-xs font-semibold text-ink-300 uppercase tracking-wide">Año de ingreso <span class="normal-case font-normal">(si no sabe el día)</span></label>
           <input type="number" id="t-anio-ingreso" min="1950" max="2100" placeholder="Ej: 2020" class="w-full mt-1 px-3 py-2 rounded-lg border border-ink-100 dark:border-ink-700 bg-paper-50 dark:bg-ink-800 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-amber-500">
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-ink-300 uppercase tracking-wide">Fecha de ingreso (día/mes/año)</label>
+          <input type="date" id="t-fecha-ingreso" class="w-full mt-1 px-3 py-2 rounded-lg border border-ink-100 dark:border-ink-700 bg-paper-50 dark:bg-ink-800 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-amber-500">
         </div>
         <div>
           <label class="text-xs font-semibold text-ink-300 uppercase tracking-wide">Fecha de nacimiento</label>
@@ -2322,6 +2329,41 @@ function renderTrabajadores() {
   }));
 }
 
+// ===================== IMPRIMIR GRUPOS DE TRABAJO Y SUS TRABAJADORES =====================
+// Una sección por grupo (con su ciclo y hora límite en el título) y, dentro, la lista de sus
+// trabajadores. Con un id imprime solo ese grupo; sin id, todos los grupos y al final los
+// trabajadores que no pertenecen a ningún grupo.
+function resumenGrupo(g) {
+  if (g.tipoCiclo === "sin_horario") return "Organizativo (cada trabajador con su propio horario)";
+  if (g.tipoCiclo === "semanal") return "Semanal: " + (DIAS_SEMANA.filter(d => (g.diasSemana || []).includes(d.v)).map(d => d.l).join("") || "—");
+  return `Ciclo ${g.diasTrabajo} trabaja / ${g.diasDescanso} descansa · inicio ${formatDateDisplay(g.fechaInicio)} · hora límite ${etiquetaHoraLimite(g)}`;
+}
+
+function imprimirGrupos(grupoId = null) {
+  const filaTrab = (t, i) => ({
+    n: i + 1, nombre: t.nombre, cedula: t.cedula || "—", cargo: t.cargo || "—",
+    ingreso: t.fechaIngreso ? formatDateDisplay(t.fechaIngreso) : (t.anioIngreso || "—"),
+    estatus: t.estatus === "activo" ? "Activo" : "Inactivo",
+  });
+  const ordenar = (arr) => arr.slice().sort((a, b) => a.nombre.localeCompare(b.nombre));
+  const gruposOrdenados = state.grupos.slice().sort((a, b) => a.nombre.localeCompare(b.nombre));
+  const lista = grupoId ? gruposOrdenados.filter(g => g.id === grupoId) : gruposOrdenados;
+  const grupos = lista.map(g => ({
+    titulo: `${g.nombre} — ${resumenGrupo(g)}`,
+    filas: ordenar(state.trabajadores.filter(t => t.grupoId === g.id)).map(filaTrab),
+  }));
+  if (!grupoId) {
+    const idsGrupos = new Set(state.grupos.map(g => g.id));
+    const sueltos = ordenar(state.trabajadores.filter(t => !t.grupoId || !idsGrupos.has(t.grupoId)));
+    if (sueltos.length) grupos.push({ titulo: "Sin grupo asignado", filas: sueltos.map(filaTrab) });
+  }
+  if (grupos.length === 0) { toast("No hay grupos para imprimir", "error"); return; }
+  imprimirTabla(grupoId ? "Grupo de trabajo — " + lista[0].nombre : "Grupos de trabajo y sus trabajadores",
+    [{ key: "n", label: "N°" }, { key: "nombre", label: "Trabajador" }, { key: "cedula", label: "Cédula" }, { key: "cargo", label: "Cargo" }, { key: "ingreso", label: "Ingreso" }, { key: "estatus", label: "Estatus" }],
+    [], { grupos });
+}
+$("#btn-imprimir-grupos").addEventListener("click", () => imprimirGrupos());
+
 // ===================== RENDER: GRUPOS =====================
 function renderGrupos() {
   $("#grupos-grid").innerHTML = state.grupos.map(g => {
@@ -2346,6 +2388,7 @@ function renderGrupos() {
       <p class="text-xs text-ink-300 font-mono">Hora límite de entrada: ${etiquetaHoraLimite(g)}${g.horaLimiteEntrada ? "" : " (general)"}</p>
       <div class="flex gap-2 pt-3 mt-3 border-t border-ink-100 dark:border-ink-800">
         <button data-miembros-grupo="${g.id}" class="flex-1 text-xs font-semibold py-1.5 rounded-lg bg-paper-100 dark:bg-ink-800 hover:bg-paper-200 dark:hover:bg-ink-700">👥 Miembros</button>
+        <button data-imprimir-grupo="${g.id}" title="Imprimir este grupo con sus trabajadores" class="text-xs font-semibold py-1.5 px-3 rounded-lg bg-paper-100 dark:bg-ink-800 hover:bg-paper-200 dark:hover:bg-ink-700">🖨</button>
         <button data-edit-grupo="${g.id}" class="flex-1 text-xs font-semibold py-1.5 rounded-lg bg-paper-100 dark:bg-ink-800 hover:bg-paper-200 dark:hover:bg-ink-700">Editar</button>
         <button data-del-grupo="${g.id}" class="text-xs font-semibold py-1.5 px-3 rounded-lg bg-coral-50 dark:bg-coral-900/30 text-coral-600 hover:bg-coral-100 dark:hover:bg-coral-900/50">🗑</button>
       </div>
@@ -2353,6 +2396,7 @@ function renderGrupos() {
   }).join("");
 
   $$("[data-miembros-grupo]").forEach(b => b.addEventListener("click", () => openMiembrosModal(b.dataset.miembrosGrupo)));
+  $$("[data-imprimir-grupo]").forEach(b => b.addEventListener("click", () => imprimirGrupos(b.dataset.imprimirGrupo)));
   $$("[data-edit-grupo]").forEach(b => b.addEventListener("click", () => openGrupoModal(b.dataset.editGrupo)));
   $$("[data-del-grupo]").forEach(b => b.addEventListener("click", () => {
     const g = state.grupos.find(x => x.id === b.dataset.delGrupo);
@@ -2702,6 +2746,8 @@ function openTrabajadorModal(id) {
   $("#t-correo").value = t?.correo || "";
   $("#t-anio-ingreso").value = t?.anioIngreso || "";
   $("#t-fecha-nacimiento").value = t?.fechaNacimiento || "";
+  $("#t-fecha-ingreso").value = t?.fechaIngreso || "";
+  if (t?.fechaIngreso) $("#t-anio-ingreso").value = t.fechaIngreso.slice(0, 4);
   $("#t-direccion").value = t?.direccion || "";
   $("#t-estatus").value = t?.estatus || "activo";
   $("#t-categoria").value = t?.categoria || "Grupos";
@@ -2718,6 +2764,10 @@ function openTrabajadorModal(id) {
   openModal("modal-trabajador");
 }
 $("#btn-nuevo-trabajador").addEventListener("click", () => openTrabajadorModal(null));
+// Al elegir la fecha completa de ingreso, el año se rellena solo.
+$("#t-fecha-ingreso").addEventListener("change", () => {
+  if ($("#t-fecha-ingreso").value) $("#t-anio-ingreso").value = $("#t-fecha-ingreso").value.slice(0, 4);
+});
 
 $("#form-trabajador").addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -2728,8 +2778,9 @@ $("#form-trabajador").addEventListener("submit", async (e) => {
     cargo: $("#t-cargo").value.trim(),
     telefono: $("#t-telefono").value.trim(),
     correo: $("#t-correo").value.trim(),
-    anioIngreso: $("#t-anio-ingreso").value ? Number($("#t-anio-ingreso").value) : null,
+    anioIngreso: $("#t-fecha-ingreso").value ? Number($("#t-fecha-ingreso").value.slice(0, 4)) : ($("#t-anio-ingreso").value ? Number($("#t-anio-ingreso").value) : null),
     fechaNacimiento: $("#t-fecha-nacimiento").value || null,
+    fechaIngreso: $("#t-fecha-ingreso").value || null,
     direccion: $("#t-direccion").value.trim(),
     estatus: $("#t-estatus").value,
     categoria: $("#t-categoria").value,
@@ -3013,13 +3064,12 @@ function renderExpediente() {
     ${t.tipoAsignacion !== "rotativo" ? `<span class="text-[11px] font-semibold px-2 py-1 rounded-full bg-paper-100 dark:bg-ink-800">${etiquetaHorario(t, id => state.grupos.find(g => g.id === id)?.nombre || "Sin grupo").replace(/^[◐▤—]\s*/, "")}</span>` : ""}
   `;
 
-  const antiguedadAnios = t.anioIngreso ? (new Date().getFullYear() - t.anioIngreso) : null;
   $("#exp-panel-resumen").innerHTML = `
     <div class="grid grid-cols-2 gap-3 text-sm">
       <div><p class="text-xs text-ink-300 uppercase tracking-wide">Teléfono</p><p class="font-medium font-mono">${t.telefono || "—"}</p></div>
       <div><p class="text-xs text-ink-300 uppercase tracking-wide">Correo</p><p class="font-medium font-mono truncate">${t.correo || "—"}</p></div>
       <div><p class="text-xs text-ink-300 uppercase tracking-wide">Dirección</p><p class="font-medium">${t.direccion || "—"}</p></div>
-      <div><p class="text-xs text-ink-300 uppercase tracking-wide">Año de ingreso</p><p class="font-medium font-display">${t.anioIngreso || "—"}${antiguedadAnios !== null ? ` <span class="text-xs text-ink-300 font-sans">(${antiguedadAnios} año${antiguedadAnios === 1 ? "" : "s"})</span>` : ""}</p></div>
+      <div><p class="text-xs text-ink-300 uppercase tracking-wide">${t.fechaIngreso ? "Fecha de ingreso" : "Año de ingreso"}</p><p class="font-medium font-display">${textoFechaIngreso(t) || "—"}${textoAntiguedad(t) ? ` <span class="text-xs text-ink-300 font-sans">(${textoAntiguedad(t)})</span>` : ""}</p></div>
       <div><p class="text-xs text-ink-300 uppercase tracking-wide">Cumpleaños</p><p class="font-medium font-display">${(() => { const fn = parseFechaNac(t.fechaNacimiento); return fn ? `${textoCumple(fn)} <span class="text-xs text-ink-300 font-sans">(${edadActual(fn)} años)</span>` : "—"; })()}</p></div>
       <div><p class="text-xs text-ink-300 uppercase tracking-wide">Días de reposo acumulados</p><p class="font-medium font-display">${(t.reposos || []).length}</p></div>
       <div><p class="text-xs text-ink-300 uppercase tracking-wide">Períodos de vacaciones</p><p class="font-medium font-display">${(t.vacaciones || []).length}</p></div>
@@ -3778,6 +3828,29 @@ function listaCumpleanos() {
   return { conFecha, sinFecha };
 }
 
+// Fecha de ingreso completa (día, mes y año) y antigüedad exacta. Si solo se conoce el año,
+// se muestra el año y la antigüedad aproximada en años.
+function textoFechaIngreso(t) {
+  const fi = parseFechaNac(t.fechaIngreso);
+  if (fi) return `${fi.d} de ${MESES_ES[fi.m - 1]} de ${fi.y}`;
+  return t.anioIngreso ? String(t.anioIngreso) : "";
+}
+function textoAntiguedad(t, hoy = new Date()) {
+  const fi = parseFechaNac(t.fechaIngreso);
+  const plural = (n, u) => `${n} ${u}${n === 1 ? "" : u === "mes" ? "es" : "s"}`;
+  if (fi) {
+    let anios = hoy.getFullYear() - fi.y;
+    let meses = hoy.getMonth() + 1 - fi.m;
+    if (hoy.getDate() < fi.d) meses--;
+    if (meses < 0) { anios--; meses += 12; }
+    if (anios < 0) return "";
+    if (anios === 0 && meses === 0) return "menos de 1 mes";
+    return [anios ? plural(anios, "año") : "", meses ? plural(meses, "mes") : ""].filter(Boolean).join(" y ");
+  }
+  if (t.anioIngreso) { const a = hoy.getFullYear() - t.anioIngreso; return a >= 0 ? plural(a, "año") : ""; }
+  return "";
+}
+
 function textoCumple(fn) { return `${fn.d} de ${MESES_ES[fn.m - 1]}`; }
 
 function renderCumpleanos() {
@@ -3999,7 +4072,7 @@ function imprimirExpediente() {
           <p style="font-size:12px;color:#555;margin:0 0 4px;">CI ${t.cedula || "—"} · ${t.cargo || "—"} · ${t.estatus === "activo" ? "Activo" : "Inactivo"}</p>
           <p style="font-size:11px;color:#555;margin:0;">Teléfono: ${t.telefono || "—"} · Correo: ${t.correo || "—"} · Dirección: ${t.direccion || "—"}</p>
           <p style="font-size:11px;color:#555;margin:2px 0 0;">Grupo: ${grupo ? grupo.nombre : t.tipoAsignacion === "calendario" ? "Calendario específico" : "Sin turno"}</p>
-          <p style="font-size:11px;color:#555;margin:2px 0 0;">Año de ingreso: ${t.anioIngreso || "—"}${t.anioIngreso ? ` (${new Date().getFullYear() - t.anioIngreso} año${(new Date().getFullYear() - t.anioIngreso) === 1 ? "" : "s"} de antigüedad)` : ""}</p>
+          <p style="font-size:11px;color:#555;margin:2px 0 0;">${t.fechaIngreso ? "Fecha de ingreso" : "Año de ingreso"}: ${textoFechaIngreso(t) || "—"}${textoAntiguedad(t) ? ` (${textoAntiguedad(t)} de antigüedad)` : ""}</p>
         </div>
       </div>
       ${seccion("Reposos médicos", t.reposos || [], it => `${it.motivo} — ${formatDateDisplay(it.fechaInicio)} → ${formatDateDisplay(it.fechaFin)}${it.driveUrl ? " · Drive: " + it.driveUrl : ""}`)}
