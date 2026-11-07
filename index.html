@@ -68,7 +68,7 @@
 <div id="print-area" class="hidden"></div>
 
 <div id="db-error-banner" class="hidden fixed top-0 left-0 right-0 z-[90] bg-coral-600 text-white text-sm font-semibold px-4 py-2.5 text-center">
-  ⚠ No se pudieron leer los datos de Firestore (no es que se hayan borrado — es un problema de permisos).
+  <span id="db-error-titulo">⚠ No se pudieron leer los datos de Firestore (no es que se hayan borrado — es un problema de permisos).</span>
   <span id="db-error-detalle" class="font-normal"></span>
 </div>
 
@@ -140,6 +140,7 @@
         <div class="flex items-center justify-between flex-wrap gap-2">
           <p class="text-sm text-ink-300 font-mono" id="trab-count-label">0 trabajadores</p>
           <div class="flex items-center gap-2">
+            <button id="btn-planilla" class="px-3 py-2 rounded-lg border border-ink-200 dark:border-ink-700 text-ink-700 dark:text-ink-200 text-xs font-semibold hover:bg-paper-100 dark:hover:bg-ink-800">📅 Planilla de horarios</button>
             <button id="btn-cumpleanos" class="px-3 py-2 rounded-lg border border-ink-200 dark:border-ink-700 text-ink-700 dark:text-ink-200 text-xs font-semibold hover:bg-paper-100 dark:hover:bg-ink-800">🎂 Cumpleaños</button>
             <button id="btn-imprimir-trabajadores" class="px-3 py-2 rounded-lg border border-ink-200 dark:border-ink-700 text-ink-700 dark:text-ink-200 text-xs font-semibold hover:bg-paper-100 dark:hover:bg-ink-800">🖨 Imprimir</button>
             <button id="btn-imprimir-firmas-todos" class="px-3 py-2 rounded-lg border border-ink-200 dark:border-ink-700 text-ink-700 dark:text-ink-200 text-xs font-semibold hover:bg-paper-100 dark:hover:bg-ink-800">🖊 Hoja de firmas</button>
@@ -1025,6 +1026,42 @@
       <p class="text-[11px] text-ink-300 flex-1 min-w-[180px]">La cédula no trae la fecha de nacimiento: escríbela aquí en cada trabajador y se guarda sola.</p>
     </div>
     <div id="cumple-lista" class="px-5 pb-5 overflow-y-auto space-y-1.5"></div>
+  </div>
+</div>
+
+<!-- ===================== MODAL: PLANILLA DE HORARIOS (PDF editable) ===================== -->
+<div id="modal-planilla" class="hidden fixed inset-0 z-[60] modal-backdrop bg-ink-950/50 flex items-center justify-center p-4">
+  <div class="fade-in bg-white dark:bg-ink-900 rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col border border-ink-100 dark:border-ink-800">
+    <div class="flex items-center justify-between p-5 pb-3">
+      <div>
+        <h3 class="font-display font-bold text-lg text-ink-900 dark:text-white">📅 Planilla de horarios (PDF editable)</h3>
+        <p class="text-xs text-ink-300 mt-0.5">Descarga, escribe una X en los días que trabaja cada uno, guarda y vuelve a importar.</p>
+      </div>
+      <button data-close="modal-planilla" class="text-ink-300 hover:text-ink-700 dark:hover:text-white text-xl leading-none">×</button>
+    </div>
+    <div class="px-5 pb-5 overflow-y-auto space-y-4">
+      <div class="rounded-xl border border-ink-100 dark:border-ink-800 p-4 space-y-3">
+        <p class="text-xs font-semibold text-ink-300 uppercase tracking-wide">1 · Descargar planilla</p>
+        <div class="flex items-end gap-3 flex-wrap">
+          <div>
+            <label class="text-xs font-semibold text-ink-300 uppercase tracking-wide">Mes</label>
+            <input type="month" id="planilla-mes" class="block mt-1 px-3 py-2 rounded-lg border border-ink-100 dark:border-ink-700 bg-paper-50 dark:bg-ink-800 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-amber-500">
+          </div>
+          <button id="btn-planilla-descargar" class="px-4 py-2 rounded-lg bg-ink-900 hover:bg-ink-800 dark:bg-amber-500 dark:hover:bg-amber-400 dark:text-ink-950 text-white text-sm font-semibold">⬇ Descargar PDF</button>
+        </div>
+        <p class="text-[11px] text-ink-300">Salen los trabajadores con horario por calendario (choferes, paramédicos, médicos, enfermeros y demás), separados por cargo. Las X de los días que ya tienen cargados vienen puestas, así que solo cambias lo que haga falta.</p>
+      </div>
+      <div class="rounded-xl border border-ink-100 dark:border-ink-800 p-4 space-y-3">
+        <p class="text-xs font-semibold text-ink-300 uppercase tracking-wide">2 · Importar planilla llena</p>
+        <input type="file" id="planilla-archivo" accept="application/pdf,.pdf" class="block w-full text-sm file:mr-3 file:px-3 file:py-2 file:rounded-lg file:border-0 file:bg-paper-100 dark:file:bg-ink-800 file:text-xs file:font-semibold">
+        <p class="text-[11px] text-ink-300">Guárdala con el botón de descargar/guardar del visor de PDF (no con "Imprimir a PDF", porque eso borra las casillas). Antes de aplicar nada verás una vista previa de los cambios.</p>
+        <div id="planilla-preview" class="space-y-2"></div>
+        <div id="planilla-acciones" class="hidden flex justify-end gap-2">
+          <button id="btn-planilla-cancelar" class="px-4 py-2 rounded-lg text-sm font-semibold text-ink-500 dark:text-ink-300 hover:bg-paper-100 dark:hover:bg-ink-800">Cancelar</button>
+          <button id="btn-planilla-aplicar" class="px-4 py-2 rounded-lg bg-ink-900 hover:bg-ink-800 dark:bg-amber-500 dark:hover:bg-amber-400 dark:text-ink-950 text-white text-sm font-semibold">Aplicar cambios</button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -3788,6 +3825,258 @@ function imprimirTrabajadores() {
 }
 $("#btn-imprimir-trabajadores").addEventListener("click", imprimirTrabajadores);
 
+// ===================== PLANILLA DE HORARIOS (PDF EDITABLE: DESCARGAR, LLENAR, IMPORTAR) =====================
+// Para los trabajadores con horario por calendario (cambia cada mes): se descarga un PDF con
+// una casilla por trabajador y día; se escribe una X en los días que trabaja y se importa de
+// vuelta. Cada casilla se llama h_AAAAMM_<idTrabajador>_<DD>, así el PDF se autodescribe y no
+// depende de la posición. Solo se reemplazan los días de ESE mes (los demás meses no se tocan).
+function cargarPdfLib() {
+  if (window.PDFLib) return Promise.resolve(window.PDFLib);
+  const fuentes = [
+    "https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js",
+    "https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js",
+  ];
+  const cargar = (src) => new Promise((res, rej) => {
+    const sc = document.createElement("script");
+    sc.src = src; sc.onload = () => res(); sc.onerror = () => rej(new Error("fallo " + src));
+    document.head.appendChild(sc);
+  });
+  return (async () => {
+    for (const src of fuentes) {
+      try { await cargar(src); if (window.PDFLib) return window.PDFLib; } catch (e) { /* prueba la siguiente */ }
+    }
+    throw new Error("No se pudo cargar la librería de PDF. Revisa tu internet (o la VPN) e intenta de nuevo.");
+  })();
+}
+
+function categoriaCargoPlanilla(t) {
+  const c = (t.cargo || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  if (/chofer|conductor/.test(c)) return { orden: 1, nombre: "Choferes" };
+  if (/paramedic/.test(c)) return { orden: 2, nombre: "Paramédicos" };
+  if (/medic|doctor|dr\./.test(c)) return { orden: 3, nombre: "Médicos" };
+  if (/enfermer/.test(c)) return { orden: 4, nombre: "Enfermeros(as)" };
+  return { orden: 5, nombre: "Otros" };
+}
+
+function trabajadoresDePlanilla() {
+  return state.trabajadores
+    .filter(t => t.estatus === "activo" && t.tipoAsignacion === "calendario")
+    .map(t => ({ t, cat: categoriaCargoPlanilla(t) }))
+    .sort((a, b) => (a.cat.orden - b.cat.orden) || a.t.nombre.localeCompare(b.t.nombre));
+}
+
+async function generarPlanillaHorarios(mesISO) {
+  const { PDFDocument, StandardFonts, rgb, TextAlignment } = await cargarPdfLib();
+  const [anio, mes] = mesISO.split("-").map(Number);
+  const diasMes = new Date(anio, mes, 0).getDate();
+  const clave = `${anio}${String(mes).padStart(2, "0")}`;
+  const lista = trabajadoresDePlanilla();
+  if (lista.length === 0) throw new Error("No hay trabajadores activos con horario por calendario.");
+
+  const pdf = await PDFDocument.create();
+  const font = await pdf.embedFont(StandardFonts.Helvetica);
+  const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
+  const form = pdf.getForm();
+  const limpio = (txt) => String(txt).replace(/[\u2013\u2014]/g, "-").replace(/\u2192/g, ">").replace(/[^\x20-\xFF]/g, "?");
+  const W = 842, H = 595, M = 28, colNombre = 176, rowH = 17;
+  const colDia = (W - 2 * M - colNombre) / diasMes;
+  const titulo = `Planilla de horarios — ${capitalizar(MESES_ES[mes - 1])} ${anio}`;
+  const letrasDia = ["D", "L", "M", "M", "J", "V", "S"];
+
+  let page, y;
+  const nuevaPagina = () => {
+    page = pdf.addPage([W, H]);
+    page.drawText(limpio("Gestión Humana"), { x: M, y: H - M - 4, size: 9, font: bold, color: rgb(.35, .35, .35) });
+    page.drawText(limpio(titulo), { x: M, y: H - M - 22, size: 15, font: bold, color: rgb(0, 0, 0) });
+    page.drawText(limpio("Escribe una X en los días que trabaja, sábados y domingos incluidos (todos los días cuentan). Deja vacío el día libre. No cambies nada más. Guarda con el botón de descargar/guardar del visor y súbelo en RRHH → Planilla de horarios."),
+      { x: M, y: H - M - 36, size: 7.5, font, color: rgb(.35, .35, .35) });
+    const yCab = H - M - 64;
+    page.drawRectangle({ x: M, y: yCab, width: colNombre, height: rowH * 1.5, color: rgb(.85, .85, .85), borderColor: rgb(.5, .5, .5), borderWidth: .5 });
+    page.drawText("Trabajador", { x: M + 4, y: yCab + 8, size: 8, font: bold });
+    for (let d = 1; d <= diasMes; d++) {
+      const x = M + colNombre + (d - 1) * colDia;
+      const dow = new Date(anio, mes - 1, d).getDay();
+      const finde = dow === 0 || dow === 6;
+      page.drawRectangle({ x, y: yCab, width: colDia, height: rowH * 1.5, color: rgb(.85, .85, .85), borderColor: rgb(.5, .5, .5), borderWidth: .5 });
+      const num = String(d);
+      page.drawText(num, { x: x + (colDia - font.widthOfTextAtSize(num, 7.5)) / 2, y: yCab + 14, size: 7.5, font: bold });
+      page.drawText(letrasDia[dow], { x: x + (colDia - font.widthOfTextAtSize(letrasDia[dow], 6.5)) / 2, y: yCab + 4, size: 6.5, font });
+    }
+    y = yCab;
+  };
+  const margenInferior = M + 14;
+  nuevaPagina();
+  let catActual = null;
+  for (const { t, cat } of lista) {
+    const necesita = (cat.nombre !== catActual ? 2 : 1) * rowH;
+    if (y - necesita < margenInferior) { nuevaPagina(); catActual = null; }
+    if (cat.nombre !== catActual) {
+      catActual = cat.nombre;
+      y -= rowH;
+      page.drawRectangle({ x: M, y, width: W - 2 * M, height: rowH, color: rgb(.93, .93, .93), borderColor: rgb(.5, .5, .5), borderWidth: .5 });
+      page.drawText(limpio(cat.nombre.toUpperCase()), { x: M + 4, y: y + 5, size: 8, font: bold });
+    }
+    y -= rowH;
+    page.drawRectangle({ x: M, y, width: colNombre, height: rowH, borderColor: rgb(.5, .5, .5), borderWidth: .5 });
+    let nombre = limpio(t.nombre);
+    while (nombre.length > 4 && font.widthOfTextAtSize(nombre, 8) > colNombre - 8) nombre = nombre.slice(0, -1);
+    page.drawText(nombre, { x: M + 4, y: y + 5, size: 8, font });
+    const marcados = new Set((t.diasCalendario || []).filter(d => d.startsWith(`${anio}-${String(mes).padStart(2, "0")}-`)));
+    for (let d = 1; d <= diasMes; d++) {
+      const dd = String(d).padStart(2, "0");
+      const iso = `${anio}-${String(mes).padStart(2, "0")}-${dd}`;
+      const dow = new Date(anio, mes - 1, d).getDay();
+      const campo = form.createTextField(`h_${clave}_${t.id}_${dd}`);
+      if (marcados.has(iso)) campo.setText("X");
+      campo.setAlignment(TextAlignment.Center);
+      campo.addToPage(page, {
+        x: M + colNombre + (d - 1) * colDia, y, width: colDia, height: rowH, font,
+        borderWidth: .5, borderColor: rgb(.5, .5, .5), textColor: rgb(0, 0, 0),
+        backgroundColor: rgb(1, 1, 1),
+      });
+      campo.setFontSize(9);
+    }
+  }
+  pdf.setTitle(titulo);
+  pdf.setSubject("RRHH-HORARIOS " + clave);
+  return pdf.save();
+}
+
+function descargarBytes(bytes, nombre, mime) {
+  const url = URL.createObjectURL(new Blob([bytes], { type: mime }));
+  const a = document.createElement("a");
+  a.href = url; a.download = nombre; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+
+let planillaPendiente = null; // { mesISO, cambios: [...] } a la espera de confirmar
+
+function openPlanillaModal() {
+  const hoy = new Date();
+  const sig = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 1);
+  $("#planilla-mes").value = `${sig.getFullYear()}-${String(sig.getMonth() + 1).padStart(2, "0")}`;
+  $("#planilla-archivo").value = "";
+  $("#planilla-preview").innerHTML = "";
+  $("#planilla-acciones").classList.add("hidden");
+  planillaPendiente = null;
+  openModal("modal-planilla");
+}
+$("#btn-planilla").addEventListener("click", openPlanillaModal);
+
+$("#btn-planilla-descargar").addEventListener("click", async () => {
+  const mesISO = $("#planilla-mes").value;
+  if (!mesISO) { toast("Elige el mes", "error"); return; }
+  const btn = $("#btn-planilla-descargar");
+  btn.disabled = true; const txt = btn.textContent; btn.textContent = "Generando…";
+  try {
+    const bytes = await generarPlanillaHorarios(mesISO);
+    descargarBytes(bytes, `Planilla_horarios_${mesISO}.pdf`, "application/pdf");
+    toast("Planilla descargada");
+  } catch (err) {
+    toast(err.message || String(err), "error");
+  } finally { btn.disabled = false; btn.textContent = txt; }
+});
+
+// Lee las casillas del PDF y arma la vista previa de cambios (sin escribir nada todavía).
+async function leerPlanillaPDF(archivo) {
+  const { PDFDocument } = await cargarPdfLib();
+  const doc = await PDFDocument.load(await archivo.arrayBuffer(), { ignoreEncryption: true });
+  const campos = doc.getForm().getFields();
+  const marcas = new Map(); // idTrabajador -> Set(ISO)
+  const meses = new Map();  // AAAAMM -> cantidad de casillas
+  campos.forEach(f => {
+    const m = f.getName().match(/^h_(\d{6})_(.+)_(\d{2})$/);
+    if (!m || typeof f.getText !== "function") return;
+    meses.set(m[1], (meses.get(m[1]) || 0) + 1);
+    if (!marcas.has(m[2])) marcas.set(m[2], { mes: m[1], dias: new Set() });
+    const texto = (f.getText() || "").trim().toLowerCase();
+    if (texto && !["0", "-", ".", "no"].includes(texto)) marcas.get(m[2]).dias.add(`${m[1].slice(0, 4)}-${m[1].slice(4)}-${m[3]}`);
+  });
+  if (meses.size === 0) throw new Error("Este PDF no tiene las casillas de la planilla. Usa el PDF que descargaste aquí y guárdalo con el botón de guardar/descargar del visor (no con Imprimir).");
+  const clave = [...meses.entries()].sort((a, b) => b[1] - a[1])[0][0];
+  return { clave, mesISO: `${clave.slice(0, 4)}-${clave.slice(4)}`, marcas };
+}
+
+function calcularCambiosPlanilla({ mesISO, marcas }) {
+  const cambios = [], sinCambios = [], noEncontrados = [];
+  marcas.forEach(({ dias }, id) => {
+    const t = state.trabajadores.find(x => x.id === id);
+    if (!t) { noEncontrados.push(id); return; }
+    const previo = (t.diasCalendario || []).filter(d => d.startsWith(mesISO + "-"));
+    const nuevo = [...dias].sort();
+    const a = new Set(previo), b = new Set(nuevo);
+    const agregados = nuevo.filter(d => !a.has(d)), quitados = previo.filter(d => !b.has(d));
+    const convierte = t.tipoAsignacion !== "calendario" && nuevo.length > 0;
+    if (t.tipoAsignacion !== "calendario" && nuevo.length === 0) { sinCambios.push(t); return; }
+    if (agregados.length === 0 && quitados.length === 0 && !convierte) { sinCambios.push(t); return; }
+    const otrosMeses = (t.diasCalendario || []).filter(d => !d.startsWith(mesISO + "-"));
+    cambios.push({ t, antes: previo.length, despues: nuevo.length, agregados: agregados.length, quitados: quitados.length, convierte, diasCalendario: [...otrosMeses, ...nuevo].sort() });
+  });
+  cambios.sort((x, y) => x.t.nombre.localeCompare(y.t.nombre));
+  return { cambios, sinCambios, noEncontrados };
+}
+
+$("#planilla-archivo").addEventListener("change", async (e) => {
+  const archivo = e.target.files[0];
+  $("#planilla-preview").innerHTML = "";
+  $("#planilla-acciones").classList.add("hidden");
+  planillaPendiente = null;
+  if (!archivo) return;
+  $("#planilla-preview").innerHTML = `<p class="text-sm text-ink-300">Leyendo planilla…</p>`;
+  try {
+    const lectura = await leerPlanillaPDF(archivo);
+    const { cambios, sinCambios, noEncontrados } = calcularCambiosPlanilla(lectura);
+    const [anio, mes] = lectura.mesISO.split("-").map(Number);
+    const nombreMes = `${capitalizar(MESES_ES[mes - 1])} ${anio}`;
+    if (cambios.length === 0) {
+      $("#planilla-preview").innerHTML = `<p class="text-sm text-ink-500 dark:text-ink-300">Planilla de <b>${nombreMes}</b>: no hay cambios respecto a lo que ya está cargado (${sinCambios.length} trabajador${sinCambios.length === 1 ? "" : "es"} sin cambios).</p>`;
+      return;
+    }
+    planillaPendiente = { mesISO: lectura.mesISO, cambios };
+    $("#planilla-preview").innerHTML = `
+      <p class="text-sm">Planilla de <b>${nombreMes}</b>: se actualizarán <b>${cambios.length}</b> trabajador${cambios.length === 1 ? "" : "es"}${sinCambios.length ? ` (${sinCambios.length} sin cambios)` : ""}. Solo se reemplazan los días de ese mes.</p>
+      <div class="overflow-x-auto rounded-lg border border-ink-100 dark:border-ink-800">
+        <table class="w-full text-xs">
+          <thead class="bg-paper-100 dark:bg-ink-800 text-ink-500 dark:text-ink-300 uppercase tracking-wide"><tr><th class="text-left p-2">Trabajador</th><th class="p-2">Antes</th><th class="p-2">Después</th><th class="p-2">Cambio</th></tr></thead>
+          <tbody>${cambios.map(c => `<tr class="border-t border-ink-100 dark:border-ink-800"><td class="p-2">${c.t.nombre}${c.convierte ? ` <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400">pasa a Calendario</span>` : ""}</td><td class="p-2 text-center font-mono">${c.antes} días</td><td class="p-2 text-center font-mono">${c.despues} días</td><td class="p-2 text-center font-mono">${c.agregados ? `<span class="text-sage-600">+${c.agregados}</span>` : ""} ${c.quitados ? `<span class="text-coral-600">−${c.quitados}</span>` : ""}</td></tr>`).join("")}</tbody>
+        </table>
+      </div>
+      ${noEncontrados.length ? `<p class="text-xs text-amber-600">${noEncontrados.length} casilla(s) de trabajadores que ya no existen se ignoraron.</p>` : ""}`;
+    $("#planilla-acciones").classList.remove("hidden");
+  } catch (err) {
+    $("#planilla-preview").innerHTML = `<p class="text-sm text-coral-600">${err.message || err}</p>`;
+  }
+});
+
+$("#btn-planilla-cancelar").addEventListener("click", () => {
+  planillaPendiente = null;
+  $("#planilla-archivo").value = "";
+  $("#planilla-preview").innerHTML = "";
+  $("#planilla-acciones").classList.add("hidden");
+});
+
+$("#btn-planilla-aplicar").addEventListener("click", async () => {
+  if (!planillaPendiente) return;
+  const { cambios } = planillaPendiente;
+  const btn = $("#btn-planilla-aplicar");
+  btn.disabled = true; btn.textContent = "Aplicando…";
+  try {
+    for (const c of cambios) {
+      const datos = { diasCalendario: c.diasCalendario, actualizado: serverTimestamp() };
+      if (c.convierte) datos.tipoAsignacion = "calendario";
+      await updateDoc(doc(db, COLL_TRABAJADORES, c.t.id), datos);
+    }
+    toast(`Horarios actualizados (${cambios.length})`);
+    planillaPendiente = null;
+    $("#planilla-archivo").value = "";
+    $("#planilla-preview").innerHTML = "";
+    $("#planilla-acciones").classList.add("hidden");
+    closeModal("modal-planilla");
+  } catch (err) {
+    toast("Error al guardar: " + err.message, "error");
+  } finally { btn.disabled = false; btn.textContent = "Aplicar cambios"; }
+});
+
 // ===================== CUMPLEAÑOS =====================
 // La fecha de nacimiento se guarda en cada trabajador (fechaNacimiento, "YYYY-MM-DD"). No se
 // puede sacar del número de cédula (no la contiene), así que se escribe una vez y de ahí se arma
@@ -4114,7 +4403,20 @@ $("#topbar-search").addEventListener("input", (e) => {
 });
 
 // ===================== SUSCRIPCIONES EN TIEMPO REAL =====================
+const TITULO_ERROR_PERMISOS = "⚠ No se pudieron leer los datos de Firestore (no es que se hayan borrado — es un problema de permisos).";
+// Firestore devuelve una lista VACÍA "desde caché" cuando no logra conectarse al servidor (sin
+// internet, VPN, bloqueo de red, pestaña vieja). Eso no es que no haya trabajadores.
+function mostrarSinConexion() {
+  $("#db-error-titulo").textContent = "⚠ Sin conexión con Firebase — tus datos NO se han borrado.";
+  $("#db-error-detalle").textContent = "Recarga la página (F5), revisa tu internet y desactiva la VPN del navegador si la tienes activa.";
+  $("#db-error-banner").classList.remove("hidden");
+  $("#conn-dot").classList.remove("bg-sage-500", "bg-amber-400");
+  $("#conn-dot").classList.add("bg-coral-500");
+  $("#conn-dot").title = "Sin conexión con Firebase";
+}
+
 function mostrarErrorDB(err) {
+  $("#db-error-titulo").textContent = TITULO_ERROR_PERMISOS;
   const esPermisos = err.code === "permission-denied";
   $("#db-error-detalle").textContent = esPermisos
     ? "Revisa las reglas de seguridad de Firestore en Firebase console (probablemente el modo de prueba caducó)."
@@ -4128,6 +4430,8 @@ function mostrarErrorDB(err) {
 function iniciarSuscripciones() {
   onSnapshot(collection(db, COLL_TRABAJADORES), (snap) => {
     state.trabajadores = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (snap.metadata.fromCache && snap.empty) { mostrarSinConexion(); renderAll(); return; }
+    $("#db-error-titulo").textContent = TITULO_ERROR_PERMISOS;
     $("#db-error-banner").classList.add("hidden");
     $("#conn-dot").classList.remove("bg-amber-400", "bg-coral-500");
     $("#conn-dot").classList.add("bg-sage-500");
